@@ -1,250 +1,196 @@
-import React, { useState } from 'react';
+import React from 'react';
+import type { Feature } from '../types';
 import Footer from './Footer';
-import { 
-  CheckCircleIcon,
-  ChevronDownIcon
-} from './icons';
-import type { Feature, Plan, Testimonial, FAQItem } from '../types';
+import { CheckCircleIcon, ChartBarIcon, SparklesIcon, ZapIcon } from './icons';
 
 interface LandingPageProps {
-  setModal: (modal: { type: 'signup' | 'login' | 'payment' | 'featureInfo'; data?: Feature }) => void;
+  setModal: (modal: { type: 'signup' | 'login' | 'payment' | 'featureInfo'; data?: Feature } | null) => void;
 }
 
-const landingPageContent = {
-  "hero": {
-    "titulo": "Sua jornada de transformação começa agora",
-    "subtitulo": "Sou a KyrosAI, sua guia pessoal para uma vida com mais propósito. Responda ao quiz inicial e receba um plano personalizado com metas, conteúdo diário e gráficos de progresso.",
-    "cta": "Comece seus 7 dias grátis"
-  },
-  "beneficios": [
-    {"titulo": "Quiz de Personalização", "descricao": "Comece com um quiz inteligente que cria um plano de desenvolvimento sob medida para você."},
-    {"titulo": "Metas Diárias Guiadas", "descricao": "Receba 10 metas diárias para construir hábitos poderosos e manter a consistência."},
-    {"titulo": "Gráficos de Progresso", "descricao": "Visualize sua evolução em saúde, leitura e produtividade com gráficos claros e motivadores."},
-    {"titulo": "Biblioteca Pessoal", "descricao": "Armazene e revise todos os textos, livros e reflexões da sua jornada em um só lugar."},
-    {"titulo": "Comunidade Interativa", "descricao": "Compartilhe insights, comente nas reflexões diárias e cresça junto com outros membros."}
-  ],
-  "planos": [
+const features: Feature[] = [
     {
-      "nome": "Start", "preco": "R$9,90/mês",
-      "detalhes": ["Quiz de personalização", "10 metas diárias", "Gráficos de progresso básicos", "Biblioteca Pessoal"],
-      "cta": "Assinar Start"
+      icon: <ChartBarIcon />,
+      title: 'Diagnóstico Completo',
+      description: 'Entenda seus pontos fortes e áreas de melhoria com nosso quiz inteligente.',
     },
     {
-      "nome": "Growth", "preco": "R$29,90/mês",
-      "detalhes": ["Tudo do Start", "Metas e gráficos avançados", "Acesso à Comunidade", "Recomendações de conteúdo IA"],
-      "cta": "Assinar Growth"
+      icon: <ZapIcon />,
+      title: 'Plano de Ação Diário',
+      description: 'Receba metas e conteúdos personalizados para impulsionar seu crescimento.',
     },
     {
-      "nome": "Master", "preco": "R$47,90/mês", "oldPrice": "R$59,90",
-      "detalhes": ["Tudo do Growth", "Sessões de mentoria em grupo", "Análise preditiva da IA", "Suporte prioritário"],
-      "cta": "Assinar Master"
-    }
-  ],
-  "prova_social": [
-    {"nome": "Ana Silva", "profissao": "Empreendedora", "depoimento": "O quiz inicial foi um divisor de águas. Finalmente entendi minhas prioridades e as metas diárias tornaram o progresso fácil e consistente."},
-    {"nome": "Carlos Oliveira", "profissao": "Profissional de TI", "depoimento": "Ver meu progresso nos gráficos de leitura e meditação é incrivelmente motivador. A comunidade também é um ótimo espaço de troca."},
-    {"nome": "Mariana Costa", "profissao": "Estudante", "depoimento": "A biblioteca pessoal é genial. Guardo todas as reflexões e textos importantes para reler quando preciso de um impulso."}
-  ],
-  "faq": [
-    {"pergunta": "Como o quiz inicial funciona?", "resposta": "É um questionário rápido sobre suas metas e desafios em áreas-chave da vida. Suas respostas nos ajudam a criar um plano de metas, conteúdos e desafios totalmente personalizado para você."},
-    {"pergunta": "As 10 metas diárias são fixas?", "resposta": "Elas são sugeridas pela IA com base no seu perfil, mas você terá flexibilidade para ajustá-las. O objetivo é criar consistência e um sentimento de conquista diária."},
-    {"pergunta": "Como os gráficos de progresso são gerados?", "resposta": "Eles são atualizados automaticamente conforme você completa suas metas diárias, leituras e meditações, oferecendo um feedback visual imediato da sua evolução."},
-    {"pergunta": "O que posso fazer na comunidade?", "resposta": "Você pode comentar nas postagens diárias, compartilhar suas reflexões, interagir com outros membros e, nos planos mais avançados, participar de discussões e mentorias."},
-    {"pergunta": "Meus dados do quiz e progresso são privados?", "resposta": "Sim, sua privacidade é nossa prioridade. Todos os dados são criptografados, usados apenas para personalizar sua experiência e jamais compartilhados."}
-  ],
-  "lead_magnet": {
-    "titulo": "Receba gratuitamente nosso checklist de hábitos transformadores",
-    "descricao": "Cadastre-se com seu e-mail e obtenha um guia prático com 5 hábitos que mudam sua produtividade e equilíbrio.",
-    "cta": "Quero meu checklist grátis"
-  },
-  "cta_final": {
-    "titulo": "Sua transformação é inevitável",
-    "descricao": "Não espere mais para evoluir. Com as ferramentas certas e o guia certo, seu potencial é ilimitado. Comece hoje.",
-    "botao": "Iniciar Minha Jornada"
-  }
-};
-
+      icon: <SparklesIcon />,
+      title: 'Comunidade de Apoio',
+      description: 'Conecte-se com pessoas na mesma jornada e compartilhe suas experiências.',
+    },
+  ];
 
 const LandingPage: React.FC<LandingPageProps> = ({ setModal }) => {
-    const [currentTestimonial, setCurrentTestimonial] = useState(0);
-    const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
-
-    const testimonials: Testimonial[] = landingPageContent.prova_social.map(t => ({
-      quote: t.depoimento, name: t.nome, role: t.profissao,
-    }));
-
-    const plans: Plan[] = landingPageContent.planos.map(p => ({
-        name: p.nome,
-        tier: p.nome as 'Start' | 'Growth' | 'Master',
-        price: p.preco.split('/')[0],
-        oldPrice: (p as { oldPrice?: string }).oldPrice,
-        period: '/' + p.preco.split('/')[1],
-        description: '', // No longer in the new content spec
-        features: p.detalhes,
-        cta: p.cta,
-        primary: p.nome === 'Growth',
-    }));
-
-    const nextTestimonial = () => setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
-    const prevTestimonial = () => setCurrentTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length);
-
-    const handleFaqToggle = (index: number) => {
-        setOpenFaqIndex(openFaqIndex === index ? null : index);
-    };
-
+  const comparisonFeatures = [
+    { name: 'Conteúdo diário', basic: '1 por dia', premium: 'Completo', vip: 'Completo' },
+    { name: 'Metas personalizadas', basic: '1 semanal', premium: 'Ilimitadas', vip: 'Ilimitadas' },
+    { name: 'Gráficos de progresso', basic: false, premium: true, vip: true },
+    { name: 'Acompanhamento de leitura', basic: '5 págs/dia', premium: '10 págs/dia', vip: '10 págs/dia' },
+    { name: 'Acesso à comunidade', basic: 'Limitado', premium: 'Ilimitado', vip: 'Ilimitado' },
+    { name: 'Áudios e meditações', basic: false, premium: true, vip: true },
+    { name: 'Consultoria via IA', basic: false, premium: false, vip: true },
+    { name: 'Desafios de 30 dias', basic: false, premium: false, vip: true },
+    { name: 'Certificados de conclusão', basic: false, premium: false, vip: true },
+    { name: 'Acesso antecipado & exclusivo', basic: false, premium: false, vip: true },
+  ];
+  
   return (
     <main>
         {/* Hero Section */}
-        <section className="relative h-screen flex items-center justify-center text-center overflow-hidden pt-20 animated-gradient-bg">
-          <div className="absolute inset-0 bg-black/40"></div>
-          <div className="relative z-10 container mx-auto px-6">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight mb-4 font-display animate-slide-in-up">
-              {landingPageContent.hero.titulo}
-            </h1>
-            <p className="max-w-3xl mx-auto text-lg md:text-xl text-gray-300 mb-8 animate-slide-in-up" style={{ animationDelay: '0.2s' }}>
-              {landingPageContent.hero.subtitulo}
-            </p>
-            <div className="flex justify-center animate-slide-in-up" style={{ animationDelay: '0.4s' }}>
-              <button onClick={() => setModal({type: 'signup'})} className="bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-transform transform hover:scale-105">
-                {landingPageContent.hero.cta}
-              </button>
+        <section className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden animated-gradient-bg">
+            <div className="container mx-auto px-6 text-center z-10">
+                <h1 className="text-4xl md:text-6xl font-extrabold text-white font-display mb-4 animate-slide-in-up">
+                    Projete sua Melhor Versão com <span className="animated-gradient-text">Inteligência Artificial</span>
+                </h1>
+                <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto mb-8 animate-slide-in-up animation-delay-300">
+                    KyrosAI é seu parceiro de desenvolvimento pessoal, criando um plano de ação diário para você alcançar seus objetivos de vida e carreira.
+                </p>
+                <div className="animate-slide-in-up animation-delay-600">
+                    <button onClick={() => setModal({type: 'signup'})} className="bg-purple-600 text-white font-bold py-4 px-10 rounded-full shadow-lg hover:bg-purple-700 transition-transform hover:scale-105 transform">
+                        Começar minha jornada (Grátis)
+                    </button>
+                    <p className="text-gray-400 mt-3 text-sm">Não é necessário cartão de crédito.</p>
+                </div>
             </div>
-          </div>
         </section>
 
         {/* Benefits Section */}
-        <section id="benefits" className="py-20 bg-[var(--color-bg)]">
-          <div className="container mx-auto px-6 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-12 font-display">Um ecossistema completo para sua evolução</h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8">
-              {landingPageContent.beneficios.map((benefit, i) => (
-                <div key={i} className="glass-card p-6 rounded-xl hover:border-purple-500/50 transition-all duration-300 transform hover:-translate-y-2 text-left">
-                  <CheckCircleIcon className="w-8 h-8 text-purple-400 mb-4" />
-                  <h3 className="text-xl font-semibold mb-2 text-white font-display">{benefit.titulo}</h3>
-                  <p className="text-gray-400">{benefit.descricao}</p>
+        <section id="benefits" className="py-20 bg-slate-950">
+            <div className="container mx-auto px-6">
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl md:text-4xl font-bold text-white font-display">Por que Kyros<span className="animated-gradient-text">AI</span>?</h2>
+                    <p className="text-gray-400 mt-2 max-w-2xl mx-auto">Nossa plataforma integra tecnologia e autoconhecimento para um desenvolvimento pessoal eficaz e sustentável.</p>
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Testimonials Section */}
-        <section id="testimonials" className="py-20 overflow-x-hidden bg-slate-800/40">
-            <div className="container mx-auto px-6 text-center">
-                <h2 className="text-3xl md:text-4xl font-bold mb-12 font-display">Histórias de transformação real</h2>
-                <div className="relative max-w-3xl mx-auto">
-                    <div className="overflow-hidden">
-                        <div className="flex transition-transform duration-500 ease-in-out" style={{ transform: `translateX(-${currentTestimonial * 100}%)` }}>
-                            {testimonials.map((testimonial, index) => (
-                                <div key={index} className="w-full flex-shrink-0 px-4">
-                                    <div className="glass-card p-8 rounded-lg">
-                                        <p className="text-gray-300 mb-6 italic text-lg">"{testimonial.quote}"</p>
-                                        <div className="font-bold text-white">{testimonial.name}</div>
-                                        <div className="text-sm text-purple-400">{testimonial.role}</div>
-                                    </div>
-                                </div>
-                            ))}
+                <div className="grid md:grid-cols-3 gap-8">
+                    {features.map((feature, index) => (
+                        <div key={index} className="glass-card p-8 rounded-lg text-center">
+                            <div className="text-purple-400 inline-block mb-4">
+                                {React.isValidElement(feature.icon) && React.cloneElement(feature.icon, { className: "w-10 h-10"})}
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
+                            <p className="text-gray-400">{feature.description}</p>
                         </div>
-                    </div>
-                    <button onClick={prevTestimonial} className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-12 bg-white/10 p-2 rounded-full hover:bg-white/20 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
-                    </button>
-                    <button onClick={nextTestimonial} className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-12 bg-white/10 p-2 rounded-full hover:bg-white/20 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
-                    </button>
+                    ))}
                 </div>
             </div>
         </section>
-
 
         {/* Pricing Section */}
         <section id="pricing" className="py-20">
-          <div className="container mx-auto px-6 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 font-display">Escolha o plano certo para sua jornada</h2>
-            <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-12">
-              Invista em você. Comece com 7 dias grátis em qualquer plano e sinta a transformação.
-            </p>
-            <div className="grid lg:grid-cols-3 gap-8 max-w-5xl mx-auto items-start">
-              {plans.map((plan, index) => (
-                <div key={index} className={`glass-card rounded-xl p-8 border ${plan.primary ? 'border-purple-500 scale-105' : 'border-slate-700'} transition-transform transform`}>
-                  {plan.primary && <div className="text-sm font-bold text-purple-400 mb-2 tracking-widest">Mais Popular</div>}
-                  <h3 className="text-2xl font-bold mb-4 font-display">{plan.name}</h3>
-                  <div className="mb-6 flex items-baseline justify-center">
-                    {plan.oldPrice && (
-                        <span className="text-2xl font-bold text-gray-500 line-through mr-2">{plan.oldPrice}</span>
-                    )}
-                    <span className="text-5xl font-extrabold text-white">{plan.price}</span>
-                    <span className="text-gray-400">{plan.period}</span>
-                  </div>
-                  <button onClick={() => plan.tier === 'Start' ? setModal({type: 'signup'}) : setModal({type: 'payment'})} className={`w-full block text-center py-3 px-6 rounded-lg font-bold ${plan.primary ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-slate-700 text-white hover:bg-slate-600'} transition-colors`}>
-                    {plan.cta}
-                  </button>
-                  <ul className="text-left mt-8 space-y-3 text-gray-300">
-                    {plan.features.map((feature, fIndex) => (
-                      <li key={fIndex} className="flex items-start">
-                        <svg className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
+            <div className="container mx-auto px-6">
+                <div className="text-center mb-12">
+                     <h2 className="text-3xl md:text-4xl font-bold text-white font-display">Planos Flexíveis para sua Jornada</h2>
+                    <p className="text-gray-400 mt-2 max-w-2xl mx-auto">Escolha o plano ideal e comece a transformar sua vida hoje com 7 dias de teste gratuito.</p>
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
-        
-        {/* FAQ Section */}
-        <section id="faq" className="py-20 bg-slate-800/40">
-            <div className="container mx-auto px-6 max-w-3xl">
-                <h2 className="text-3xl md:text-4xl font-bold mb-8 text-center font-display">Perguntas Frequentes</h2>
-                <div className="space-y-4">
-                    {landingPageContent.faq.map((item, index) => (
-                        <div key={index} className="glass-card rounded-lg overflow-hidden border border-slate-800">
-                            <button onClick={() => handleFaqToggle(index)} className="w-full flex justify-between items-center text-left p-6">
-                                <span className="font-semibold text-lg text-white">{item.pergunta}</span>
-                                <ChevronDownIcon className={`w-6 h-6 text-purple-400 transition-transform duration-300 ${openFaqIndex === index ? 'rotate-180' : ''}`} />
-                            </button>
-                            <div className={`transition-all duration-300 ease-in-out ${openFaqIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-                                <div className="p-6 pt-0 text-gray-400">
-                                    {item.resposta}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
+                <div className="grid lg:grid-cols-3 gap-8 mb-16 items-stretch">
+                    {/* Basic Plan */}
+                    <div className="glass-card border border-slate-700 rounded-lg p-8 w-full flex flex-col">
+                        <h3 className="text-2xl font-bold text-white">Básico</h3>
+                        <p className="text-gray-400 mt-2 mb-6">Para quem está começando a jornada.</p>
+                        <p className="text-4xl font-extrabold text-white mb-6">R$7,99 <span className="text-lg font-normal text-gray-400">/mês</span></p>
+                        <ul className="space-y-3 mb-8 flex-grow">
+                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-green-400 mr-2 flex-shrink-0 mt-1" /> 1 Conteúdo diário (texto ou vídeo)</li>
+                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-green-400 mr-2 flex-shrink-0 mt-1" /> 1 Meta semanal simples</li>
+                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-green-400 mr-2 flex-shrink-0 mt-1" /> Acompanhamento básico de progresso</li>
+                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-green-400 mr-2 flex-shrink-0 mt-1" /> Acesso limitado à comunidade</li>
+                             <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-green-400 mr-2 flex-shrink-0 mt-1" /> 5 páginas de leitura diária</li>
+                        </ul>
+                        <button onClick={() => setModal({type: 'payment'})} className="w-full bg-slate-700 text-white font-bold py-3 rounded-lg hover:bg-slate-600 transition-colors mt-auto">Comece Agora - 7 Dias Grátis</button>
+                    </div>
+                    {/* Premium Plan */}
+                    <div className="glass-card border-2 border-purple-500 rounded-lg p-8 w-full relative flex flex-col">
+                        <span className="absolute top-0 -translate-y-1/2 bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full">MAIS POPULAR</span>
+                        <h3 className="text-2xl font-bold text-white">Premium</h3>
+                        <p className="text-gray-400 mt-2 mb-6">Para quem busca crescimento acelerado.</p>
+                        <p className="text-4xl font-extrabold text-white mb-6">R$19,90 <span className="text-lg font-normal text-gray-400">/mês</span></p>
+                         <ul className="space-y-3 mb-8 flex-grow">
+                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-purple-400 mr-2 flex-shrink-0 mt-1" /> Acesso completo ao conteúdo diário</li>
+                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-purple-400 mr-2 flex-shrink-0 mt-1" /> Metas personalizadas (baseado no quiz)</li>
+                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-purple-400 mr-2 flex-shrink-0 mt-1" /> Gráficos de progresso</li>
+                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-purple-400 mr-2 flex-shrink-0 mt-1" /> 10 páginas de leitura com acompanhamento</li>
+                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-purple-400 mr-2 flex-shrink-0 mt-1" /> Acesso ilimitado à comunidade</li>
+                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-purple-400 mr-2 flex-shrink-0 mt-1" /> Áudios e meditações diárias</li>
+                        </ul>
+                        <button onClick={() => setModal({type: 'payment'})} className="w-full bg-purple-600 text-white font-bold py-3 rounded-lg hover:bg-purple-700 transition-colors mt-auto">Experimente Agora - 7 Dias Grátis</button>
+                    </div>
+                     {/* VIP Plan */}
+                    <div className="glass-card border border-slate-700 rounded-lg p-8 w-full flex flex-col">
+                        <h3 className="text-2xl font-bold text-white">Premium + VIP</h3>
+                        <p className="text-gray-400 mt-2 mb-6">Acompanhamento completo e exclusivo.</p>
+                        <p className="text-4xl font-extrabold text-white mb-6">R$37,90 <span className="text-lg font-normal text-gray-400">/mês</span></p>
+                         <ul className="space-y-3 mb-8 flex-grow">
+                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-sky-400 mr-2 flex-shrink-0 mt-1" /> <strong>Tudo do plano Premium</strong></li>
+                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-sky-400 mr-2 flex-shrink-0 mt-1" /> Consultoria personalizada via IA</li>
+                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-sky-400 mr-2 flex-shrink-0 mt-1" /> Desafios imersivos de 30 dias</li>
+                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-sky-400 mr-2 flex-shrink-0 mt-1" /> Certificados de conclusão</li>
+                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-sky-400 mr-2 flex-shrink-0 mt-1" /> Acesso antecipado a novos conteúdos</li>
+                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-sky-400 mr-2 flex-shrink-0 mt-1" /> Vídeos e áudios exclusivos</li>
+                        </ul>
+                        <button onClick={() => setModal({type: 'payment'})} className="w-full bg-sky-500 text-white font-bold py-3 rounded-lg hover:bg-sky-600 transition-colors mt-auto">Acesse Agora - 7 Dias Grátis</button>
+                    </div>
+                </div>
+                
+                 {/* Comparison Table */}
+                <div className="text-center mb-12 mt-20">
+                    <h3 className="text-3xl font-bold text-white font-display">Compare os Planos</h3>
+                </div>
+                <div className="glass-card rounded-lg p-2 sm:p-6 overflow-x-auto">
+                    <table className="w-full text-left min-w-[600px]">
+                        <thead>
+                            <tr className="border-b border-slate-700">
+                                <th className="p-4 text-white font-semibold">Funcionalidade</th>
+                                <th className="p-4 text-white font-semibold text-center">Básico</th>
+                                <th className="p-4 text-purple-400 font-semibold text-center">Premium</th>
+                                <th className="p-4 text-sky-400 font-semibold text-center">Premium + VIP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {comparisonFeatures.map(feature => (
+                                <tr key={feature.name} className="border-b border-slate-800 last:border-0">
+                                    <td className="p-4 text-gray-300">{feature.name}</td>
+                                    <td className="p-4 text-gray-400 text-center">{typeof feature.basic === 'boolean' ? (feature.basic ? <CheckCircleIcon className="w-6 h-6 text-green-400 mx-auto" /> : '—') : feature.basic}</td>
+                                    <td className="p-4 text-gray-400 text-center">{typeof feature.premium === 'boolean' ? (feature.premium ? <CheckCircleIcon className="w-6 h-6 text-green-400 mx-auto" /> : '—') : feature.premium}</td>
+                                    <td className="p-4 text-gray-400 text-center">{typeof feature.vip === 'boolean' ? (feature.vip ? <CheckCircleIcon className="w-6 h-6 text-green-400 mx-auto" /> : '—') : feature.vip}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </section>
 
-        {/* Lead Magnet Section */}
-        <section className="py-20">
-            <div className="container mx-auto px-6">
-                <div className="glass-card rounded-xl p-8 md:p-12 max-w-4xl mx-auto text-center border border-purple-500/50">
-                    <h2 className="text-2xl md:text-3xl font-bold font-display text-white mb-4">{landingPageContent.lead_magnet.titulo}</h2>
-                    <p className="text-gray-400 mb-6">{landingPageContent.lead_magnet.descricao}</p>
-                    <form className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto" onSubmit={(e) => e.preventDefault()}>
-                        <input type="email" placeholder="Seu melhor e-mail" className="flex-grow bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" required />
-                        <button type="submit" className="bg-purple-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-purple-700 transition-colors">
-                            {landingPageContent.lead_magnet.cta}
-                        </button>
-                    </form>
+        {/* FAQ Section */}
+        <section id="faq" className="py-20 bg-slate-950">
+            <div className="container mx-auto px-6 max-w-4xl">
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl md:text-4xl font-bold text-white font-display">Perguntas Frequentes</h2>
+                </div>
+                <div className="space-y-4">
+                    {/* FAQ Item 1 */}
+                    <details className="glass-card p-6 rounded-lg group">
+                        <summary className="font-semibold text-white cursor-pointer list-none flex justify-between items-center">
+                            Como a IA personaliza meu plano?
+                            <span className="transform group-open:rotate-45 transition-transform">+</span>
+                        </summary>
+                        <p className="text-gray-400 mt-4">Nossa IA analisa suas respostas no quiz inicial, seus objetivos e seu progresso diário para adaptar continuamente seu plano de ação, recomendando conteúdos e metas que são mais relevantes para você naquele momento.</p>
+                    </details>
+                    {/* FAQ Item 2 */}
+                    <details className="glass-card p-6 rounded-lg group">
+                        <summary className="font-semibold text-white cursor-pointer list-none flex justify-between items-center">
+                            Posso cancelar minha assinatura a qualquer momento?
+                            <span className="transform group-open:rotate-45 transition-transform">+</span>
+                        </summary>
+                        <p className="text-gray-400 mt-4">Sim, você pode cancelar a assinatura de qualquer plano pago a qualquer momento através do painel da sua conta. Você continuará com acesso aos recursos do plano até o final do período de faturamento.</p>
+                    </details>
                 </div>
             </div>
         </section>
         
-        {/* Final CTA Section */}
-        <section className="py-20 text-center">
-          <div className="container mx-auto px-6">
-            <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4 font-display">
-              <span className="animated-gradient-text">{landingPageContent.cta_final.titulo}</span>
-            </h2>
-            <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-8">
-              {landingPageContent.cta_final.descricao}
-            </p>
-            <button onClick={() => setModal({type: 'signup'})} className="bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold py-4 px-10 rounded-full shadow-lg text-lg hover:shadow-purple-500/50 transition-all transform hover:scale-105">
-              {landingPageContent.cta_final.botao}
-            </button>
-          </div>
-        </section>
         <Footer />
     </main>
   );

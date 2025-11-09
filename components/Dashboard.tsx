@@ -49,7 +49,8 @@ const initialDailyGoals: DailyGoal[] = [
 const mockLibraryItems: LibraryItem[] = [
     {id: 1, type: 'Texto', title: 'O Superpoder da Autodisciplina', date: 'Hoje', status: 'Lido'},
     {id: 2, type: 'Livro', title: 'O Poder do Hábito', date: 'Iniciado Hoje', status: 'Em Progresso'},
-    {id: 3, type: 'Reflexão', title: 'Reflexão sobre Autodisciplina', date: 'Hoje', content: 'Minha maior dificuldade é...'},
+    // FIX: Added the missing 'status' property to satisfy the 'LibraryItem' type definition.
+    {id: 3, type: 'Reflexão', title: 'Reflexão sobre Autodisciplina', date: 'Hoje', status: 'Concluída', content: 'Minha maior dificuldade é...'},
     {id: 4, type: 'Texto', title: 'A Importância do Foco', date: 'Ontem', status: 'Lido'},
 ];
 

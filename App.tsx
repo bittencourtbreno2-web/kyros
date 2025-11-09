@@ -13,21 +13,38 @@ const App: React.FC = () => {
   const [initialLifeAreas, setInitialLifeAreas] = useState<LifeArea[]>([]);
   const [modal, setModal] = useState<{ type: 'signup' | 'login' | 'payment' | 'featureInfo'; data?: Feature } | null>(null);
 
+  // State for simulated authentication
+  const [registeredUser, setRegisteredUser] = useState<{name: string, email: string, password: string} | null>(null);
+  const [loginError, setLoginError] = useState<string | null>(null);
+
   useEffect(() => {
     // Scroll to top on view change
     window.scrollTo(0, 0);
   }, [view]);
 
-  const handleLogin = (name: string) => {
-    setUser({ name });
-    setView('dashboard');
-    setModal(null);
+  const handleLogin = (email: string, password: string) => {
+    if (!registeredUser) {
+      setLoginError('Nenhum usuário cadastrado. Por favor, crie uma conta primeiro.');
+      return;
+    }
+    
+    if (registeredUser.email === email && registeredUser.password === password) {
+      setUser({ name: registeredUser.name });
+      setView('dashboard');
+      setModal(null);
+      setLoginError(null);
+    } else {
+      setLoginError('E-mail ou senha inválidos. Tente novamente.');
+    }
   };
 
-  const handleSignup = (name: string) => {
+  const handleSignup = (name: string, email: string, password: string) => {
+    const newUser = { name, email, password };
+    setRegisteredUser(newUser);
     setUser({ name });
     setView('quiz');
     setModal(null);
+    setLoginError(null);
   };
   
   const handleLogout = () => {
@@ -50,18 +67,25 @@ const App: React.FC = () => {
           <>
             <h2 className="text-2xl font-bold text-white mb-2 font-display">Crie sua Conta</h2>
             <p className="text-gray-400 mb-6">Comece a construir sua melhor versão hoje.</p>
-            <form onSubmit={(e) => { e.preventDefault(); handleSignup((e.currentTarget.elements.namedItem('name') as HTMLInputElement).value); }}>
+            <form onSubmit={(e) => { 
+                e.preventDefault(); 
+                const form = e.currentTarget;
+                const name = (form.elements.namedItem('name') as HTMLInputElement).value;
+                const email = (form.elements.namedItem('email_signup') as HTMLInputElement).value;
+                const password = (form.elements.namedItem('password_signup') as HTMLInputElement).value;
+                handleSignup(name, email, password);
+              }}>
               <div className="mb-4">
                 <label htmlFor="name" className="block text-gray-300 mb-2">Nome</label>
                 <input type="text" id="name" name="name" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" required />
               </div>
               <div className="mb-4">
                 <label htmlFor="email_signup" className="block text-gray-300 mb-2">Email</label>
-                <input type="email" id="email_signup" name="email" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" required />
+                <input type="email" id="email_signup" name="email_signup" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" required />
               </div>
                <div className="mb-6">
                 <label htmlFor="password_signup" className="block text-gray-300 mb-2">Senha</label>
-                <input type="password" id="password_signup" name="password" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" required />
+                <input type="password" id="password_signup" name="password_signup" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" required />
               </div>
               <button type="submit" className="w-full bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">
                 Criar conta gratuita
@@ -74,15 +98,22 @@ const App: React.FC = () => {
           <>
             <h2 className="text-2xl font-bold text-white mb-2 font-display">Bem-vindo(a) de volta!</h2>
             <p className="text-gray-400 mb-6">Continue sua jornada de progresso.</p>
-            <form onSubmit={(e) => { e.preventDefault(); handleLogin('Usuário'); }}>
+            <form onSubmit={(e) => { 
+                e.preventDefault(); 
+                const form = e.currentTarget;
+                const email = (form.elements.namedItem('email_login') as HTMLInputElement).value;
+                const password = (form.elements.namedItem('password_login') as HTMLInputElement).value;
+                handleLogin(email, password);
+              }}>
                <div className="mb-4">
                 <label htmlFor="email_login" className="block text-gray-300 mb-2">Email</label>
-                <input type="email" id="email_login" name="email" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" required defaultValue="user@example.com"/>
+                <input type="email" id="email_login" name="email_login" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" required />
               </div>
                <div className="mb-6">
                 <label htmlFor="password_login" className="block text-gray-300 mb-2">Senha</label>
-                <input type="password" id="password_login" name="password" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" required defaultValue="password" />
+                <input type="password" id="password_login" name="password_login" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" required />
               </div>
+              {loginError && <p className="text-red-400 text-sm mb-4 text-center">{loginError}</p>}
               <button type="submit" className="w-full bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">
                 Entrar
               </button>
@@ -130,7 +161,7 @@ const App: React.FC = () => {
       <Header 
         user={user} 
         onLogout={handleLogout} 
-        onOpenLogin={() => setModal({type: 'login'})}
+        onOpenLogin={() => { setModal({type: 'login'}); setLoginError(null); }}
         onOpenSignup={() => setModal({type: 'signup'})}
         onGoToDashboard={() => setView('dashboard')}
         onGoHome={() => setView('landing')}
