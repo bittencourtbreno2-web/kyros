@@ -7,29 +7,27 @@ import RadarChart from './RadarChart';
 // MOCK DATA 
 const dailyContentData: DailyContent = {
   date: new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
-  theme: "Autodisciplina",
+  theme: "Produtividade",
+  motivation: "O segredo para progredir é começar. Comece onde você está, use o que você tem, faça o que você pode.",
+  recommendedFor: "Produtividade",
   text: {
-    title: "O Superpoder da Autodisciplina",
-    content: "A autodisciplina não é sobre rigidez, mas sobre liberdade. É a capacidade de escolher o que você mais quer no futuro em vez do que você quer agora. Cada pequena decisão disciplinada é um tijolo na construção da vida que você deseja. Hoje, concentre-se em uma única escolha que honre seus objetivos de longo prazo."
+    title: "5 Dicas para Aumentar sua Produtividade no Trabalho",
+    content: "A produtividade não se trata de fazer mais, mas de fazer o que é mais importante de forma eficiente. Aqui estão 5 dicas práticas:\n\n1. **A Regra dos 2 Minutos:** Se uma tarefa leva menos de dois minutos, faça-a imediatamente.\n2. **Técnica Pomodoro:** Trabalhe focado por 25 minutos, depois faça uma pausa de 5 minutos. Isso mantém a mente fresca.\n3. **Priorize com a Matriz de Eisenhower:** Divida as tarefas em urgentes/importantes para saber no que focar primeiro.\n4. **Organize seu Espaço:** Um ambiente de trabalho limpo e organizado reduz as distrações e o estresse.\n5. **Defina 3 Prioridades Diárias:** Comece o dia definindo as três coisas mais importantes que você precisa realizar."
   },
   reflection: {
-    prompt: "Como você pode aplicar o conceito de 'autodisciplina' hoje em uma pequena ação para se aproximar de uma de suas grandes metas?"
-  },
-  video: {
-    title: "Como construir a autodisciplina - um guia",
-    url: "https://www.youtube.com/embed/gD_jwL4_te4"
+    prompt: "Qual dessas 5 dicas de produtividade você pode aplicar hoje para fazer a maior diferença no seu dia? E qual seria o primeiro passo?"
   },
   reading: {
     pages: 10,
-    bookSuggestion: "'O Poder do Hábito'"
+    bookSuggestion: "'A Tríade do Tempo'"
   },
   bookRecommendations: [
-    { title: "O Poder do Hábito", author: "Charles Duhigg", description: "Entenda a ciência por trás da formação de hábitos e como transformá-los.", coverUrl: "" },
-    { title: "A Sutil Arte de Ligar o F*da-se", author: "Mark Manson", description: "Uma abordagem contraintuitiva para viver uma vida boa, focando no que realmente importa.", coverUrl: "" }
+    { title: "A Tríade do Tempo", author: "Christian Barbosa", description: "Aprenda a equilibrar o que é urgente, importante e circunstancial.", coverUrl: "" },
+    { title: "O Poder do Hábito", author: "Charles Duhigg", description: "Entenda a ciência por trás da formação de hábitos e como transformá-los.", coverUrl: "" }
   ],
   challenge: {
-    title: "Reflexão Diária Guiada",
-    description: "Reserve um momento para refletir sobre o texto de hoje, suas metas atuais e seu progresso."
+    title: "Reflexão sobre Produtividade",
+    description: "Reserve um momento para refletir sobre o texto de hoje e como ele se aplica às suas metas atuais."
   }
 };
 
@@ -37,21 +35,15 @@ const initialDailyGoals: DailyGoal[] = [
     { id: 1, text: "Meditar por 15 minutos", category: "Mente", completed: false, ep: 15 },
     { id: 2, text: `Ler 10 páginas de '${dailyContentData.bookRecommendations[0].title}'`, category: "Mente", completed: false, ep: 10 },
     { id: 3, text: "Compartilhar reflexão na comunidade", category: "Conexão", completed: false, ep: 20 },
-    { id: 4, text: "Definir 1 objetivo profissional para o dia", category: "Carreira", completed: false, ep: 10 },
+    { id: 4, text: "Definir as 3 prioridades do dia", category: "Carreira", completed: false, ep: 10 },
     { id: 5, text: "Fazer 20 minutos de caminhada", category: "Corpo", completed: false, ep: 15 },
-    { id: 6, text: "Praticar gratidão por 5 minutos", category: "Mente", completed: false, ep: 10 },
-    { id: 7, text: "Enviar uma mensagem positiva para um amigo", category: "Conexão", completed: false, ep: 10 },
-    { id: 8, text: "Revisar seu orçamento diário", category: "Carreira", completed: false, ep: 5 },
-    { id: 9, text: "Beber 2 litros de água", category: "Corpo", completed: false, ep: 5 },
-    { id: 10, text: "Planejar o dia de amanhã", category: "Carreira", completed: false, ep: 10 },
 ];
 
 const mockLibraryItems: LibraryItem[] = [
-    {id: 1, type: 'Texto', title: 'O Superpoder da Autodisciplina', date: 'Hoje', status: 'Lido'},
-    {id: 2, type: 'Livro', title: 'O Poder do Hábito', date: 'Iniciado Hoje', status: 'Em Progresso'},
-    // FIX: Added the missing 'status' property to satisfy the 'LibraryItem' type definition.
-    {id: 3, type: 'Reflexão', title: 'Reflexão sobre Autodisciplina', date: 'Hoje', status: 'Concluída', content: 'Minha maior dificuldade é...'},
-    {id: 4, type: 'Texto', title: 'A Importância do Foco', date: 'Ontem', status: 'Lido'},
+    {id: 1, type: 'Artigo', title: '5 Dicas para Aumentar sua Produtividade no Trabalho', date: 'Hoje', status: 'Lido', content: dailyContentData.text.content, notes: ''},
+    {id: 2, type: 'Livro', title: 'A Tríade do Tempo', date: 'Iniciado Hoje', status: 'Em Progresso', content: 'Resumo do livro...', notes: ''},
+    {id: 3, type: 'Reflexão', title: 'Reflexão sobre Produtividade', date: 'Hoje', status: 'Concluída', content: `"${dailyContentData.reflection.prompt}"`, notes: 'Minha maior dificuldade é focar. Vou tentar a técnica Pomodoro amanhã.'},
+    {id: 4, type: 'Artigo', title: 'A Importância do Foco', date: 'Ontem', status: 'Lido', content: 'Conteúdo do artigo de ontem...', notes: ''},
 ];
 
 const mockCommunityPosts: CommunityPost[] = [
@@ -59,8 +51,8 @@ const mockCommunityPosts: CommunityPost[] = [
         id: 1, author: 'KyrosAI', avatar: '', timestamp: 'Agora', 
         content: `Tópico de Hoje: "${dailyContentData.reflection.prompt}"`,
         replies: [
-             { id: 2, author: 'Ana Silva', avatar: '', timestamp: 'há 5 min', content: 'Ótima reflexão! Para mim, a autodisciplina hoje foi dizer não a uma distração e focar no meu projeto principal. Pequenos passos!', replies: [] },
-             { id: 3, author: 'Carlos Oliveira', avatar: '', timestamp: 'há 2 min', content: 'Concordo, Ana. A minha foi fazer a caminhada mesmo estando cansado. A sensação depois é ótima!', replies: [] },
+             { id: 2, author: 'Ana Silva', avatar: '', timestamp: 'há 5 min', content: 'Vou começar com a Regra dos 2 Minutos! Tenho várias pequenas tarefas que sempre adio. Parece simples, mas acho que vai fazer uma grande diferença.', replies: [] },
+             { id: 3, author: 'Carlos Oliveira', avatar: '', timestamp: 'há 2 min', content: 'Para mim, o desafio é definir as 3 prioridades. Às vezes tudo parece importante. Mas vou tentar focar em apenas três amanhã.', replies: [] },
         ]
     }
 ];
@@ -102,10 +94,22 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas }) => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'progress' | 'library' | 'community' | 'account'>('dashboard');
   const [dailyGoals, setDailyGoals] = useState<DailyGoal[]>(initialDailyGoals);
+  const [libraryItems, setLibraryItems] = useState<LibraryItem[]>(mockLibraryItems);
+  const [expandedItemId, setExpandedItemId] = useState<number | null>(null);
   
   const handleGoalToggle = (id: number) => {
       setDailyGoals(goals => goals.map(goal => goal.id === id ? {...goal, completed: !goal.completed} : goal));
-  }
+  };
+
+  const handleToggleLibraryItem = (id: number) => {
+    setExpandedItemId(prevId => prevId === id ? null : id);
+  };
+
+  const handleNoteChange = (id: number, newNotes: string) => {
+      setLibraryItems(prevItems => 
+          prevItems.map(item => item.id === id ? { ...item, notes: newNotes } : item)
+      );
+  };
 
   const evolutionPoints = useMemo(() => {
     return dailyGoals.reduce((total, goal) => goal.completed ? total + goal.ep : total, 0);
@@ -144,14 +148,38 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas 
             <div className="animate-fade-in">
               <h1 className="text-3xl font-bold font-display text-white mb-6">Minha Biblioteca</h1>
               <div className="space-y-4">
-                {mockLibraryItems.map(item => (
-                    <div key={item.id} className="glass-card p-4 rounded-lg flex justify-between items-center">
-                        <div>
-                            <span className={`text-xs font-bold ${item.type === 'Livro' ? 'text-purple-400' : 'text-sky-400'}`}>{item.type}</span>
-                            <p className="text-white font-semibold">{item.title}</p>
-                            <p className="text-sm text-gray-500">{item.date}</p>
+                {libraryItems.map(item => (
+                    <div key={item.id} className="glass-card rounded-lg overflow-hidden transition-all duration-300">
+                        <div onClick={() => handleToggleLibraryItem(item.id)} className="p-4 flex justify-between items-center cursor-pointer">
+                            <div>
+                                <span className={`text-xs font-bold ${item.type === 'Livro' ? 'text-purple-400' : 'text-sky-400'}`}>{item.type}</span>
+                                <p className="text-white font-semibold">{item.title}</p>
+                                <p className="text-sm text-gray-500">{item.date}</p>
+                            </div>
+                            <div className="flex items-center">
+                               {item.status && <span className={`hidden sm:block text-xs font-semibold px-2 py-1 rounded-full mr-4 ${item.status === 'Lido' || item.status === 'Concluída' ? 'bg-green-500/20 text-green-300' : 'bg-yellow-500/20 text-yellow-300'}`}>{item.status}</span>}
+                               <svg className={`w-5 h-5 text-gray-400 transform transition-transform ${expandedItemId === item.id ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                            </div>
                         </div>
-                        {item.status && <span className={`text-xs font-semibold px-2 py-1 rounded-full ${item.status === 'Lido' ? 'bg-green-500/20 text-green-300' : 'bg-yellow-500/20 text-yellow-300'}`}>{item.status}</span>}
+                        {expandedItemId === item.id && (
+                            <div className="p-4 border-t border-slate-700 animate-fade-in">
+                                {item.content && (
+                                    <div className="mb-4">
+                                        <h4 className="font-semibold text-white mb-2">Conteúdo</h4>
+                                        <p className="text-gray-300 text-sm whitespace-pre-line bg-slate-900/50 p-3 rounded-md">{item.content}</p>
+                                    </div>
+                                )}
+                                <div>
+                                    <h4 className="font-semibold text-white mb-2">Minhas Anotações</h4>
+                                    <textarea 
+                                        value={item.notes || ''} 
+                                        onChange={(e) => handleNoteChange(item.id, e.target.value)}
+                                        className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm h-24"
+                                        placeholder="Escreva suas reflexões e insights aqui..."
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 ))}
               </div>
@@ -234,21 +262,24 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas 
                 {/* Main Column */}
                 <div className="lg:col-span-2 space-y-6">
                     <div className="glass-card p-6 rounded-lg">
-                        <h2 className="text-xl font-semibold font-display text-purple-400 mb-2">Texto do Dia: {dailyContentData.text.title}</h2>
-                        <p className="text-gray-300">{dailyContentData.text.content}</p>
+                        <h2 className="text-xl font-semibold font-display text-sky-400 mb-2">Motivação do Dia</h2>
+                        <p className="text-gray-300 italic">"{dailyContentData.motivation}"</p>
                     </div>
+
+                    <div className="glass-card p-6 rounded-lg">
+                        <div className="flex justify-between items-start mb-2">
+                           <h2 className="text-xl font-semibold font-display text-purple-400">{dailyContentData.text.title}</h2>
+                           {dailyContentData.recommendedFor && <span className="text-xs font-semibold px-2 py-1 rounded-full bg-purple-500/20 text-purple-300 flex-shrink-0 ml-4">Para sua meta: {dailyContentData.recommendedFor}</span>}
+                        </div>
+                        <p className="text-gray-300 whitespace-pre-line">{dailyContentData.text.content}</p>
+                    </div>
+
                     <div className="glass-card p-6 rounded-lg">
                         <h2 className="text-xl font-semibold font-display text-purple-400 mb-2">Reflexão Diária</h2>
                         <p className="text-gray-300 mb-4 italic">"{dailyContentData.reflection.prompt}"</p>
                         <div className="flex flex-col sm:flex-row gap-4">
-                           <button className="flex-1 bg-slate-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-slate-600 transition-colors">Meditar por 15 min</button>
-                           <button className="flex-1 bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">Compartilhar na Comunidade</button>
-                        </div>
-                    </div>
-                     <div className="glass-card p-6 rounded-lg">
-                        <h2 className="text-xl font-semibold font-display text-purple-400 mb-4 flex items-center"><VideoIcon className="w-5 h-5 mr-2" /> Vídeo do Dia</h2>
-                        <div className="aspect-w-16 aspect-h-9">
-                            <iframe src={dailyContentData.video.url} title={dailyContentData.video.title} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen className="w-full h-full rounded-lg"></iframe>
+                           <button onClick={() => setActiveTab('library')} className="flex-1 bg-slate-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-slate-600 transition-colors">Fazer anotações na Biblioteca</button>
+                           <button onClick={() => setActiveTab('community')} className="flex-1 bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">Compartilhar na Comunidade</button>
                         </div>
                     </div>
                 </div>

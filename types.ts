@@ -44,10 +44,6 @@ export interface DailyContent {
   reflection: {
     prompt: string;
   };
-  video: {
-    title: string;
-    url: string;
-  };
   reading: {
     pages: number;
     bookSuggestion: string;
@@ -57,6 +53,8 @@ export interface DailyContent {
     title: string;
     description: string;
   };
+  motivation: string;
+  recommendedFor?: string;
 }
 
 export interface DailyGoal {
@@ -74,6 +72,7 @@ export interface LibraryItem {
     date: string;
     status: string;
     content?: string;
+    notes?: string;
 }
 
 export interface CommunityPost {
