@@ -23,9 +23,9 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, onOpenLogin, onOpenSign
   }, []);
 
   const navLinks = [
-    { name: 'A Solução', href: '#solution' },
-    { name: 'Como Funciona', href: '#how-it-works' },
+    { name: 'Benefícios', href: '#benefits' },
     { name: 'Planos', href: '#pricing' },
+    { name: 'FAQ', href: '#faq' },
   ];
 
   const handleNavClick = (e: React.MouseEvent, action: () => void) => {

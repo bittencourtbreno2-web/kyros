@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import LandingPage from './components/LandingPage';
-import Diagnosis from './components/Diagnosis';
+import Quiz from './components/Quiz';
 import Dashboard from './components/Dashboard';
 import Modal from './components/Modal';
-import type { User, LifeArea, Feature } from './types';
+import type { User, LifeArea, Feature, QuizAnswer } from './types';
 
 const App: React.FC = () => {
-  const [view, setView] = useState<'landing' | 'diagnosis' | 'dashboard'>('landing');
+  const [view, setView] = useState<'landing' | 'quiz' | 'dashboard'>('landing');
   const [user, setUser] = useState<User | null>(null);
-  const [diagnosisResults, setDiagnosisResults] = useState<LifeArea[]>([]);
+  const [quizResults, setQuizResults] = useState<QuizAnswer[]>([]);
+  const [initialLifeAreas, setInitialLifeAreas] = useState<LifeArea[]>([]);
   const [modal, setModal] = useState<{ type: 'signup' | 'login' | 'payment' | 'featureInfo'; data?: Feature } | null>(null);
 
   useEffect(() => {
@@ -25,7 +26,7 @@ const App: React.FC = () => {
 
   const handleSignup = (name: string) => {
     setUser({ name });
-    setView('diagnosis');
+    setView('quiz');
     setModal(null);
   };
   
@@ -34,8 +35,9 @@ const App: React.FC = () => {
     setView('landing');
   };
 
-  const handleDiagnosisComplete = (results: LifeArea[]) => {
-    setDiagnosisResults(results);
+  const handleQuizComplete = (answers: QuizAnswer[], finalScores: LifeArea[]) => {
+    setQuizResults(answers);
+    setInitialLifeAreas(finalScores);
     setView('dashboard');
   };
 
@@ -48,7 +50,6 @@ const App: React.FC = () => {
           <>
             <h2 className="text-2xl font-bold text-white mb-2 font-display">Crie sua Conta</h2>
             <p className="text-gray-400 mb-6">Comece a construir sua melhor versão hoje.</p>
-            {/* Fix: Correctly access form input value. `e.currentTarget.name` was referencing the form's `name` attribute (a string), not the input field. Using `e.currentTarget.elements.namedItem('name')` specifically targets the input element. */}
             <form onSubmit={(e) => { e.preventDefault(); handleSignup((e.currentTarget.elements.namedItem('name') as HTMLInputElement).value); }}>
               <div className="mb-4">
                 <label htmlFor="name" className="block text-gray-300 mb-2">Nome</label>
@@ -113,10 +114,10 @@ const App: React.FC = () => {
 
   const renderView = () => {
     switch(view) {
-      case 'diagnosis':
-        return <Diagnosis onComplete={handleDiagnosisComplete} userName={user?.name || 'Usuário'} />;
+      case 'quiz':
+        return <Quiz onComplete={handleQuizComplete} userName={user?.name || 'Usuário'} />;
       case 'dashboard':
-        return <Dashboard user={user} onLogout={handleLogout} diagnosisResults={diagnosisResults} />;
+        return <Dashboard user={user} onLogout={handleLogout} initialLifeAreas={initialLifeAreas} />;
       case 'landing':
       default:
         return <LandingPage setModal={setModal} />;
