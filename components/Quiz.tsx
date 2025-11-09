@@ -20,7 +20,7 @@ const Quiz: React.FC<QuizProps> = ({ onComplete, userName }) => {
 
   const handleAnswer = (questionId: string, answer: string) => {
     setAnswers(prev => [...prev.filter(a => a.questionId !== questionId), { questionId, answer }]);
-    if (step < quizQuestions.length) {
+    if (step <= quizQuestions.length) {
         setStep(step + 1);
     }
   };

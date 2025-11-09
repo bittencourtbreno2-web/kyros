@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Feature } from '../types';
 import Footer from './Footer';
-import { CheckCircleIcon, ChartBarIcon, SparklesIcon, ZapIcon } from './icons';
+import { CheckCircleIcon, ChartBarIcon, SparklesIcon, ZapIcon, BookOpenIcon, AwardIcon, VideoIcon } from './icons';
 
 interface LandingPageProps {
   setModal: (modal: { type: 'signup' | 'login' | 'payment' | 'featureInfo'; data?: Feature } | null) => void;
@@ -27,16 +27,15 @@ const features: Feature[] = [
 
 const LandingPage: React.FC<LandingPageProps> = ({ setModal }) => {
   const comparisonFeatures = [
-    { name: 'Conteúdo diário', basic: '1 por dia', premium: 'Completo', vip: 'Completo' },
-    { name: 'Metas personalizadas', basic: '1 semanal', premium: 'Ilimitadas', vip: 'Ilimitadas' },
+    { name: 'Acesso ao conteúdo diário', basic: '1 por dia (limitado)', premium: 'Completo', vip: 'Completo + Antecipado' },
+    { name: 'Metas', basic: '1 semanal (simples)', premium: 'Personalizadas', vip: 'Personalizadas com IA' },
     { name: 'Gráficos de progresso', basic: false, premium: true, vip: true },
-    { name: 'Acompanhamento de leitura', basic: '5 págs/dia', premium: '10 págs/dia', vip: '10 págs/dia' },
+    { name: 'Leitura diária', basic: '5 págs (sugestão)', premium: '10 págs (acompanhamento)', vip: '10 págs (acompanhamento)' },
     { name: 'Acesso à comunidade', basic: 'Limitado', premium: 'Ilimitado', vip: 'Ilimitado' },
-    { name: 'Áudios e meditações', basic: false, premium: true, vip: true },
+    { name: 'Áudios e meditações', basic: false, premium: true, vip: 'Exclusivos' },
     { name: 'Consultoria via IA', basic: false, premium: false, vip: true },
     { name: 'Desafios de 30 dias', basic: false, premium: false, vip: true },
     { name: 'Certificados de conclusão', basic: false, premium: false, vip: true },
-    { name: 'Acesso antecipado & exclusivo', basic: false, premium: false, vip: true },
   ];
   
   return (
@@ -90,46 +89,45 @@ const LandingPage: React.FC<LandingPageProps> = ({ setModal }) => {
                 <div className="grid lg:grid-cols-3 gap-8 mb-16 items-stretch">
                     {/* Basic Plan */}
                     <div className="glass-card border border-slate-700 rounded-lg p-8 w-full flex flex-col">
-                        <h3 className="text-2xl font-bold text-white">Básico</h3>
-                        <p className="text-gray-400 mt-2 mb-6">Para quem está começando a jornada.</p>
-                        <p className="text-4xl font-extrabold text-white mb-6">R$7,99 <span className="text-lg font-normal text-gray-400">/mês</span></p>
-                        <ul className="space-y-3 mb-8 flex-grow">
-                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-green-400 mr-2 flex-shrink-0 mt-1" /> 1 Conteúdo diário (texto ou vídeo)</li>
-                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-green-400 mr-2 flex-shrink-0 mt-1" /> 1 Meta semanal simples</li>
-                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-green-400 mr-2 flex-shrink-0 mt-1" /> Acompanhamento básico de progresso</li>
-                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-green-400 mr-2 flex-shrink-0 mt-1" /> Acesso limitado à comunidade</li>
-                             <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-green-400 mr-2 flex-shrink-0 mt-1" /> 5 páginas de leitura diária</li>
+                        <h3 className="text-2xl font-bold text-white font-display">Plano Básico</h3>
+                        <p className="text-gray-400 mt-2 mb-6">Para iniciantes que buscam uma introdução gradual.</p>
+                        <p className="text-5xl font-extrabold text-white mb-6">R$7,99<span className="text-lg font-normal text-gray-400">/mês</span></p>
+                        <ul className="space-y-4 text-gray-300 mb-8 flex-grow">
+                            <li className="flex items-start"><BookOpenIcon className="w-6 h-6 text-green-400 mr-3 flex-shrink-0" /> 1 Conteúdo diário (texto ou vídeo)</li>
+                            <li className="flex items-start"><AwardIcon className="w-6 h-6 text-green-400 mr-3 flex-shrink-0" /> 1 Meta simples semanal</li>
+                            <li className="flex items-start"><ChartBarIcon className="w-6 h-6 text-green-400 mr-3 flex-shrink-0" /> Acompanhamento básico de progresso</li>
+                            <li className="flex items-start"><SparklesIcon className="w-6 h-6 text-green-400 mr-3 flex-shrink-0" /> Acesso limitado à comunidade</li>
+                             <li className="flex items-start"><BookOpenIcon className="w-6 h-6 text-green-400 mr-3 flex-shrink-0" /> Sugestão de 5 págs de leitura diária</li>
                         </ul>
                         <button onClick={() => setModal({type: 'payment'})} className="w-full bg-slate-700 text-white font-bold py-3 rounded-lg hover:bg-slate-600 transition-colors mt-auto">Comece Agora - 7 Dias Grátis</button>
                     </div>
                     {/* Premium Plan */}
                     <div className="glass-card border-2 border-purple-500 rounded-lg p-8 w-full relative flex flex-col">
                         <span className="absolute top-0 -translate-y-1/2 bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full">MAIS POPULAR</span>
-                        <h3 className="text-2xl font-bold text-white">Premium</h3>
-                        <p className="text-gray-400 mt-2 mb-6">Para quem busca crescimento acelerado.</p>
-                        <p className="text-4xl font-extrabold text-white mb-6">R$19,90 <span className="text-lg font-normal text-gray-400">/mês</span></p>
-                         <ul className="space-y-3 mb-8 flex-grow">
-                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-purple-400 mr-2 flex-shrink-0 mt-1" /> Acesso completo ao conteúdo diário</li>
-                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-purple-400 mr-2 flex-shrink-0 mt-1" /> Metas personalizadas (baseado no quiz)</li>
-                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-purple-400 mr-2 flex-shrink-0 mt-1" /> Gráficos de progresso</li>
-                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-purple-400 mr-2 flex-shrink-0 mt-1" /> 10 páginas de leitura com acompanhamento</li>
-                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-purple-400 mr-2 flex-shrink-0 mt-1" /> Acesso ilimitado à comunidade</li>
-                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-purple-400 mr-2 flex-shrink-0 mt-1" /> Áudios e meditações diárias</li>
+                        <h3 className="text-2xl font-bold text-white font-display">Plano Premium</h3>
+                        <p className="text-gray-400 mt-2 mb-6">Para quem deseja uma experiência personalizada.</p>
+                        <p className="text-5xl font-extrabold text-white mb-6">R$19,90<span className="text-lg font-normal text-gray-400">/mês</span></p>
+                         <ul className="space-y-4 text-gray-300 mb-8 flex-grow">
+                            <li className="flex items-start"><BookOpenIcon className="w-6 h-6 text-purple-400 mr-3 flex-shrink-0" /> Acesso completo ao conteúdo diário</li>
+                            <li className="flex items-start"><AwardIcon className="w-6 h-6 text-purple-400 mr-3 flex-shrink-0" /> Metas personalizadas (baseado no quiz)</li>
+                            <li className="flex items-start"><ChartBarIcon className="w-6 h-6 text-purple-400 mr-3 flex-shrink-0" /> Gráficos de progresso</li>
+                            <li className="flex items-start"><BookOpenIcon className="w-6 h-6 text-purple-400 mr-3 flex-shrink-0" /> 10 págs de leitura com acompanhamento</li>
+                            <li className="flex items-start"><SparklesIcon className="w-6 h-6 text-purple-400 mr-3 flex-shrink-0" /> Acesso ilimitado à comunidade</li>
+                            <li className="flex items-start"><VideoIcon className="w-6 h-6 text-purple-400 mr-3 flex-shrink-0" /> Áudios e meditações diárias</li>
                         </ul>
                         <button onClick={() => setModal({type: 'payment'})} className="w-full bg-purple-600 text-white font-bold py-3 rounded-lg hover:bg-purple-700 transition-colors mt-auto">Experimente Agora - 7 Dias Grátis</button>
                     </div>
                      {/* VIP Plan */}
                     <div className="glass-card border border-slate-700 rounded-lg p-8 w-full flex flex-col">
-                        <h3 className="text-2xl font-bold text-white">Premium + VIP</h3>
-                        <p className="text-gray-400 mt-2 mb-6">Acompanhamento completo e exclusivo.</p>
-                        <p className="text-4xl font-extrabold text-white mb-6">R$37,90 <span className="text-lg font-normal text-gray-400">/mês</span></p>
-                         <ul className="space-y-3 mb-8 flex-grow">
-                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-sky-400 mr-2 flex-shrink-0 mt-1" /> <strong>Tudo do plano Premium</strong></li>
-                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-sky-400 mr-2 flex-shrink-0 mt-1" /> Consultoria personalizada via IA</li>
-                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-sky-400 mr-2 flex-shrink-0 mt-1" /> Desafios imersivos de 30 dias</li>
-                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-sky-400 mr-2 flex-shrink-0 mt-1" /> Certificados de conclusão</li>
-                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-sky-400 mr-2 flex-shrink-0 mt-1" /> Acesso antecipado a novos conteúdos</li>
-                            <li className="flex items-start"><CheckCircleIcon className="w-5 h-5 text-sky-400 mr-2 flex-shrink-0 mt-1" /> Vídeos e áudios exclusivos</li>
+                        <h3 className="text-2xl font-bold text-white font-display">Plano Premium + VIP</h3>
+                        <p className="text-gray-400 mt-2 mb-6">Acompanhamento intenso e recursos exclusivos.</p>
+                        <p className="text-5xl font-extrabold text-white mb-6">R$37,90<span className="text-lg font-normal text-gray-400">/mês</span></p>
+                         <ul className="space-y-4 text-gray-300 mb-8 flex-grow">
+                            <li className="flex items-start font-semibold text-white"><CheckCircleIcon className="w-6 h-6 text-sky-400 mr-3 flex-shrink-0" /> Tudo do plano Premium</li>
+                            <li className="flex items-start"><SparklesIcon className="w-6 h-6 text-sky-400 mr-3 flex-shrink-0" /> Consultoria personalizada via IA</li>
+                            <li className="flex items-start"><ZapIcon className="w-6 h-6 text-sky-400 mr-3 flex-shrink-0" /> Desafios imersivos de 30 dias</li>
+                            <li className="flex items-start"><AwardIcon className="w-6 h-6 text-sky-400 mr-3 flex-shrink-0" /> Certificados de conclusão</li>
+                            <li className="flex items-start"><VideoIcon className="w-6 h-6 text-sky-400 mr-3 flex-shrink-0" /> Acesso antecipado e vídeos exclusivos</li>
                         </ul>
                         <button onClick={() => setModal({type: 'payment'})} className="w-full bg-sky-500 text-white font-bold py-3 rounded-lg hover:bg-sky-600 transition-colors mt-auto">Acesse Agora - 7 Dias Grátis</button>
                     </div>
@@ -154,8 +152,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ setModal }) => {
                                 <tr key={feature.name} className="border-b border-slate-800 last:border-0">
                                     <td className="p-4 text-gray-300">{feature.name}</td>
                                     <td className="p-4 text-gray-400 text-center">{typeof feature.basic === 'boolean' ? (feature.basic ? <CheckCircleIcon className="w-6 h-6 text-green-400 mx-auto" /> : '—') : feature.basic}</td>
-                                    <td className="p-4 text-gray-400 text-center">{typeof feature.premium === 'boolean' ? (feature.premium ? <CheckCircleIcon className="w-6 h-6 text-green-400 mx-auto" /> : '—') : feature.premium}</td>
-                                    <td className="p-4 text-gray-400 text-center">{typeof feature.vip === 'boolean' ? (feature.vip ? <CheckCircleIcon className="w-6 h-6 text-green-400 mx-auto" /> : '—') : feature.vip}</td>
+                                    <td className="p-4 text-gray-400 text-center">{typeof feature.premium === 'boolean' ? (feature.premium ? <CheckCircleIcon className="w-6 h-6 text-purple-400 mx-auto" /> : '—') : feature.premium}</td>
+                                    <td className="p-4 text-gray-400 text-center">{typeof feature.vip === 'boolean' ? (feature.vip ? <CheckCircleIcon className="w-6 h-6 text-sky-400 mx-auto" /> : '—') : feature.vip}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -171,15 +169,20 @@ const LandingPage: React.FC<LandingPageProps> = ({ setModal }) => {
                     <h2 className="text-3xl md:text-4xl font-bold text-white font-display">Perguntas Frequentes</h2>
                 </div>
                 <div className="space-y-4">
-                    {/* FAQ Item 1 */}
                     <details className="glass-card p-6 rounded-lg group">
                         <summary className="font-semibold text-white cursor-pointer list-none flex justify-between items-center">
                             Como a IA personaliza meu plano?
                             <span className="transform group-open:rotate-45 transition-transform">+</span>
                         </summary>
-                        <p className="text-gray-400 mt-4">Nossa IA analisa suas respostas no quiz inicial, seus objetivos e seu progresso diário para adaptar continuamente seu plano de ação, recomendando conteúdos e metas que são mais relevantes para você naquele momento.</p>
+                        <p className="text-gray-400 mt-4">Nossa IA analisa suas respostas no quiz inicial, seus objetivos e seu progresso diário para adaptar continuamente seu plano de ação. No plano VIP, ela atua como uma consultora, sugerindo ajustes e melhorias diárias com base no seu desempenho para acelerar seus resultados.</p>
                     </details>
-                    {/* FAQ Item 2 */}
+                    <details className="glass-card p-6 rounded-lg group">
+                        <summary className="font-semibold text-white cursor-pointer list-none flex justify-between items-center">
+                            O que são os desafios de 30 dias?
+                            <span className="transform group-open:rotate-45 transition-transform">+</span>
+                        </summary>
+                        <p className="text-gray-400 mt-4">São programas imersivos e focados, disponíveis no plano VIP, projetados para impulsionar uma área específica da sua vida (como produtividade, finanças ou bem-estar) em um mês. Eles incluem metas diárias, conteúdo exclusivo e acompanhamento para garantir uma transformação prática e contínua.</p>
+                    </details>
                     <details className="glass-card p-6 rounded-lg group">
                         <summary className="font-semibold text-white cursor-pointer list-none flex justify-between items-center">
                             Posso cancelar minha assinatura a qualquer momento?
