@@ -5,7 +5,7 @@ import Quiz from './components/Quiz';
 import Dashboard from './components/Dashboard';
 import Subscription from './components/Subscription';
 import Modal from './components/Modal';
-import PricingPage from './components/PricingPage'; // Import new component
+import PricingPage from './components/PricingPage';
 import type { User, LifeArea, Feature, QuizAnswer, RegisteredUser, SubscriptionPlan } from './types';
 import { EyeIcon, EyeSlashIcon, AppleIcon } from './components/icons';
 
@@ -14,7 +14,7 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [quizResults, setQuizResults] = useState<QuizAnswer[]>([]);
   const [initialLifeAreas, setInitialLifeAreas] = useState<LifeArea[]>([]);
-  const [modal, setModal] = useState<{ type: 'signup' | 'login' | 'payment' | 'featureInfo' | 'forgotPassword' | 'resetConfirmation'; data?: Feature | { plan: SubscriptionPlan }; email?: string } | null>(null);
+  const [modal, setModal] = useState<{ type: 'signup' | 'login' | 'featureInfo' | 'forgotPassword' | 'resetConfirmation'; data?: Feature; email?: string } | null>(null);
 
   // States for auth forms
   const [authError, setAuthError] = useState<string | null>(null);
@@ -35,15 +35,79 @@ const App: React.FC = () => {
 
   const updateUserInStorage = (updatedUser: Partial<RegisteredUser> & { email: string }): RegisteredUser | undefined => {
       const users = getRegisteredUsers();
-      const updatedUsers = users.map(u => 
-          u.email === updatedUser.email ? { ...u, ...updatedUser } : u
-      );
+      const userIndex = users.findIndex(u => u.email === updatedUser.email);
+      if (userIndex === -1) return undefined;
+      
+      const updatedUsers = [...users];
+      updatedUsers[userIndex] = { ...users[userIndex], ...updatedUser };
+
       localStorage.setItem('kyros_users', JSON.stringify(updatedUsers));
-      return updatedUsers.find(u => u.email === updatedUser.email);
+      return updatedUsers[userIndex];
   };
 
-  // --- Persistent Auth Logic ---
+  // --- Kirvano & Persistent Auth Logic ---
   useEffect(() => {
+    // 1. Check for Kirvano confirmation URL
+    const handleKirvanoConfirmation = (email: string, plan: SubscriptionPlan) => {
+        const users = getRegisteredUsers();
+        let registeredUser = users.find(u => u.email === email);
+        const now = new Date();
+        const endDate = new Date(new Date().setDate(now.getDate() + 30));
+
+        if (registeredUser) { // Existing user
+            const updatedDetails = updateUserInStorage({
+                email,
+                subscriptionPlan: plan,
+                subscriptionStatus: 'Active',
+                subscriptionStartDate: now.toISOString(),
+                subscriptionEndDate: endDate.toISOString(),
+                lastLogin: now.toISOString(),
+            });
+            if (updatedDetails) registeredUser = updatedDetails;
+        } else { // New user from Kirvano purchase
+            registeredUser = {
+                id: `user-${Date.now()}`,
+                name: email.split('@')[0], // Simple name generation
+                email,
+                createdAt: now.toISOString(),
+                lastLogin: now.toISOString(),
+                subscriptionPlan: plan,
+                subscriptionStatus: 'Active',
+                subscriptionStartDate: now.toISOString(),
+                subscriptionEndDate: endDate.toISOString(),
+                lifeAreas: [],
+            };
+            users.push(registeredUser);
+            localStorage.setItem('kyros_users', JSON.stringify(users));
+        }
+
+        if (registeredUser) {
+            const appUser = createInitialUser(registeredUser);
+            setUser(appUser);
+            setInitialLifeAreas(registeredUser.lifeAreas || []);
+            localStorage.setItem('kyros_session', JSON.stringify({ email: appUser.email }));
+            
+            // Redirect to quiz if new, otherwise to dashboard
+            if (!registeredUser.lifeAreas || registeredUser.lifeAreas.length === 0) {
+                setView('quiz');
+            } else {
+                setView('dashboard');
+            }
+        }
+        
+        // Clean URL to prevent re-triggering
+        window.history.replaceState({}, document.title, window.location.pathname.split('?')[0]);
+    };
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const emailParam = urlParams.get('email');
+    const planParam = urlParams.get('plano') as SubscriptionPlan;
+    if (emailParam && planParam && ['Essencial', 'Avançado', 'Premium'].includes(planParam)) {
+        handleKirvanoConfirmation(emailParam, planParam);
+        return; // Stop further processing to avoid conflict
+    }
+
+    // 2. Check for existing session
     try {
         const session = localStorage.getItem('kyros_session');
         if (session) {
@@ -67,7 +131,7 @@ const App: React.FC = () => {
                     setView('pricing');
                 }
             } else {
-                handleLogout();
+                handleLogout(); // Session exists but user not found, clear session.
             }
         }
     } catch (error) {
@@ -121,17 +185,11 @@ const App: React.FC = () => {
     localStorage.setItem('kyros_session', JSON.stringify({ email: loggedInUser.email }));
     setModal(null);
 
-    const selectedPlan = localStorage.getItem('kyros_selected_plan') as SubscriptionPlan | null;
-    if (selectedPlan) {
-        localStorage.removeItem('kyros_selected_plan');
-        handleSubscription(selectedPlan, loggedInUser);
+    const isSubscribedAndActive = loggedInUser.subscriptionStatus === 'Active' && updatedUser.subscriptionEndDate && new Date(updatedUser.subscriptionEndDate) > new Date();
+    if (isSubscribedAndActive) {
+        setView('dashboard');
     } else {
-        const isSubscribedAndActive = loggedInUser.subscriptionStatus === 'Active' && updatedUser.subscriptionEndDate && new Date(updatedUser.subscriptionEndDate) > new Date();
-        if (isSubscribedAndActive) {
-            setView('dashboard');
-        } else {
-            setView('pricing');
-        }
+        setView('pricing');
     }
   };
   
@@ -169,17 +227,11 @@ const App: React.FC = () => {
     localStorage.setItem('kyros_session', JSON.stringify({ email: loggedInUser.email }));
     setModal(null);
 
-    const selectedPlan = localStorage.getItem('kyros_selected_plan') as SubscriptionPlan | null;
-    if (selectedPlan) {
-        localStorage.removeItem('kyros_selected_plan');
-        handleSubscription(selectedPlan, loggedInUser);
+    const isSubscribedAndActive = loggedInUser.subscriptionStatus === 'Active' && foundUser.subscriptionEndDate && new Date(foundUser.subscriptionEndDate) > new Date();
+    if (isSubscribedAndActive) {
+        setView('dashboard');
     } else {
-        const isSubscribedAndActive = loggedInUser.subscriptionStatus === 'Active' && foundUser.subscriptionEndDate && new Date(foundUser.subscriptionEndDate) > new Date();
-        if (isSubscribedAndActive) {
-            setView('dashboard');
-        } else {
-            setView('pricing');
-        }
+        setView('pricing');
     }
   }
 
@@ -216,14 +268,7 @@ const App: React.FC = () => {
     setUser(loggedInUser);
     localStorage.setItem('kyros_session', JSON.stringify({ email: loggedInUser.email }));
     setModal(null);
-    
-    const selectedPlan = localStorage.getItem('kyros_selected_plan') as SubscriptionPlan | null;
-    if (selectedPlan) {
-        localStorage.removeItem('kyros_selected_plan');
-        handleSubscription(selectedPlan, loggedInUser);
-    } else {
-        setView('pricing');
-    }
+    setView('pricing');
   };
 
   const handleLogout = () => {
@@ -252,41 +297,6 @@ const App: React.FC = () => {
 
     setView('dashboard');
   };
-  
-  const handleSubscription = (plan: SubscriptionPlan, subscribingUser: User | null) => {
-      if (!subscribingUser || plan === 'Free') return;
-
-      const now = new Date();
-      const endDate = new Date(new Date().setDate(now.getDate() + 30));
-
-      const fullUpdatedUser = updateUserInStorage({
-          email: subscribingUser.email,
-          subscriptionPlan: plan,
-          subscriptionStatus: 'Active',
-          subscriptionStartDate: now.toISOString(),
-          subscriptionEndDate: endDate.toISOString(),
-      });
-      if(!fullUpdatedUser) return;
-
-      const updatedUserObject = createInitialUser(fullUpdatedUser);
-      setUser(updatedUserObject);
-      
-      if (!fullUpdatedUser.lifeAreas || fullUpdatedUser.lifeAreas.length === 0) {
-          setView('quiz');
-      } else {
-          setView('dashboard');
-      }
-      setModal(null);
-  };
-  
-  const handleSelectPlan = (plan: SubscriptionPlan) => {
-    if (user) {
-      setModal({ type: 'payment', data: { plan } });
-    } else {
-      localStorage.setItem('kyros_selected_plan', plan);
-      openModal('signup');
-    }
-  };
 
   const clearAuthMessages = () => {
       setAuthError(null);
@@ -311,7 +321,6 @@ const App: React.FC = () => {
 
   const renderModalContent = () => {
     if (!modal) return null;
-    const selectedPlan = localStorage.getItem('kyros_selected_plan');
 
     switch (modal.type) {
       case 'signup':
@@ -319,11 +328,7 @@ const App: React.FC = () => {
         return (
           <>
             <h2 className="text-2xl font-bold text-white mb-2 font-display">Crie sua Conta</h2>
-            {selectedPlan ? (
-              <p className="text-gray-400 mb-6">Para ativar o plano <span className="font-bold text-purple-400">{selectedPlan}</span>, crie sua conta abaixo.</p>
-            ) : (
-              <p className="text-gray-400 mb-6">Comece a construir sua melhor versão hoje.</p>
-            )}
+            <p className="text-gray-400 mb-6">Comece a construir sua melhor versão hoje.</p>
             <form onSubmit={(e) => { e.preventDefault(); handleSignup(e.currentTarget.name_signup.value, e.currentTarget.email_signup.value, password); }}>
               <input type="text" name="name_signup" placeholder="Nome" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500" required />
               <input type="email" name="email_signup" placeholder="Email" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500" required />
@@ -361,11 +366,7 @@ const App: React.FC = () => {
          return (
           <>
             <h2 className="text-2xl font-bold text-white mb-2 font-display">Bem-vindo(a) de volta!</h2>
-            {selectedPlan ? (
-              <p className="text-gray-400 mb-6">Para ativar o plano <span className="font-bold text-purple-400">{selectedPlan}</span>, faça login na sua conta.</p>
-            ) : (
-              <p className="text-gray-400 mb-6">Continue sua jornada de progresso.</p>
-            )}
+            <p className="text-gray-400 mb-6">Continue sua jornada de progresso.</p>
             <form onSubmit={(e) => { e.preventDefault(); handleLogin(e.currentTarget.email_login.value, e.currentTarget.password_login.value);}}>
                <input type="email" name="email_login" placeholder="Email" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500" required />
                <div className="relative mb-2">
@@ -407,18 +408,6 @@ const App: React.FC = () => {
                 </form>
              </>
           );
-      case 'payment':
-        const planData = modal.data as { plan: SubscriptionPlan };
-        return (
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-white mb-2 font-display">Confirmar Assinatura</h2>
-            <p className="text-gray-400 mb-4">Você está assinando o plano <span className={`font-bold text-purple-400`}>{planData.plan}</span>.</p>
-            <p className="text-gray-400">Esta é uma simulação. Nenhum valor será cobrado.</p>
-            <button onClick={() => handleSubscription(planData.plan, user)} className="mt-6 w-full bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">
-                Confirmar e Iniciar
-            </button>
-          </div>
-        );
       case 'featureInfo':
          return (
           <>
@@ -435,16 +424,16 @@ const App: React.FC = () => {
   const renderView = () => {
     switch(view) {
       case 'subscription':
-        return <Subscription user={user} onSubscribe={(plan) => handleSelectPlan(plan)} onLogout={handleLogout} />;
+        return <Subscription user={user} onLogout={handleLogout} />;
       case 'quiz':
         return <Quiz onComplete={handleQuizComplete} userName={user?.name || 'Usuário'} />;
       case 'dashboard':
         return <Dashboard user={user} onLogout={handleLogout} initialLifeAreas={initialLifeAreas} onViewPlans={() => setView('pricing')} />;
       case 'pricing':
-        return <PricingPage user={user} onSelectPlan={handleSelectPlan} />;
+        return <PricingPage user={user} />;
       case 'landing':
       default:
-        return <LandingPage onSelectPlan={handleSelectPlan} openModal={openModal} />;
+        return <LandingPage openModal={openModal} />;
     }
   };
 

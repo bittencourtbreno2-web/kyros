@@ -4,7 +4,6 @@ import Footer from './Footer';
 import { ChartBarIcon, SparklesIcon, ZapIcon, BookOpenIcon } from './icons';
 
 interface LandingPageProps {
-  onSelectPlan: (plan: SubscriptionPlan) => void;
   openModal: (type: 'signup' | 'login') => void;
 }
 
@@ -21,13 +20,13 @@ const testimonials = [
     { name: "Beatriz S.", age: 24, text: "Finalmente parei de só assistir vídeos de produtividade e comecei a agir." },
 ];
 
-const plans: { name: SubscriptionPlan; price: string; description: string; color: string }[] = [
-    { name: "Essencial", price: "9,90", description: "Ideal para começar seu progresso pessoal.", color: "slate" },
-    { name: "Pro", price: "19,90", description: "Inclui metas de carreira e relatórios semanais.", color: "purple" },
-    { name: "Premium", price: "37,90", description: "Tudo do Pro + check-ins de foco e coach por IA.", color: "sky" },
+const plans: { name: SubscriptionPlan; price: string; description: string; color: string; kirvanoLink: string; }[] = [
+    { name: "Essencial", price: "9,90", description: "Ideal para começar seu progresso pessoal.", color: "slate", kirvanoLink: "https://kirvano.com/checkout/LINK_DO_PLANO_ESSENCIAL" },
+    { name: "Avançado", price: "19,90", description: "Inclui metas de carreira e relatórios semanais.", color: "purple", kirvanoLink: "https://kirvano.com/checkout/LINK_DO_PLANO_AVANCADO" },
+    { name: "Premium", price: "37,90", description: "Tudo do Avançado + check-ins de foco e coach por IA.", color: "sky", kirvanoLink: "https://kirvano.com/checkout/LINK_DO_PLANO_PREMIUM" },
 ];
 
-const LandingPage: React.FC<LandingPageProps> = ({ onSelectPlan, openModal }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ openModal }) => {
 
   return (
     <main>
@@ -70,9 +69,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSelectPlan, openModal }) =>
                 <div className="mt-12">
                      <h3 className="text-2xl md:text-3xl font-bold font-display animated-gradient-text mb-2">Quer um plano 100% feito para você?</h3>
                      <p className="text-gray-300 text-lg mb-6">Assine o KyrosAI e receba planos diários personalizados com base nas suas metas.</p>
-                     <button onClick={() => openModal('signup')} className="bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-transform hover:scale-105 transform">
-                        Gerar meu plano real
-                    </button>
+                     <a href="#pricing" className="bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-transform hover:scale-105 transform">
+                        Ver Planos
+                    </a>
                 </div>
             </div>
         </section>
@@ -89,7 +88,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSelectPlan, openModal }) =>
                             </div>
                             <div className="flex items-baseline gap-4 w-full sm:w-auto">
                                 <p className="text-3xl font-extrabold text-white">R${plan.price}<span className="text-base font-normal text-gray-400">/mês</span></p>
-                                <button onClick={() => onSelectPlan(plan.name)} className={`w-full sm:w-auto bg-purple-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-purple-700 transition-colors`}>Ativar Plano</button>
+                                <a href={plan.kirvanoLink} target="_blank" rel="noopener noreferrer" className={`w-full sm:w-auto bg-purple-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-purple-700 transition-colors text-center`}>Ativar Plano</a>
                             </div>
                         </div>
                     ))}

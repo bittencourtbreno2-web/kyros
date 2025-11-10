@@ -4,7 +4,6 @@ import { CheckCircleIcon } from './icons';
 
 interface PricingPageProps {
     user: User | null;
-    onSelectPlan: (plan: SubscriptionPlan) => void;
 }
 
 const plansData = [
@@ -20,9 +19,10 @@ const plansData = [
         ],
         color: 'slate',
         recommended: false,
+        kirvanoLink: "https://kirvano.com/checkout/LINK_DO_PLANO_ESSENCIAL"
     },
     {
-        name: 'Pro' as SubscriptionPlan,
+        name: 'Avançado' as SubscriptionPlan,
         price: '19,90',
         description: 'Para quem busca crescimento acelerado e insights profundos.',
         features: [
@@ -30,17 +30,18 @@ const plansData = [
             'Metas de carreira e finanças',
             'Relatórios de progresso semanais',
             'Análises e insights da IA',
-            'Comunidade exclusiva Pro',
+            'Comunidade exclusiva Avançado',
         ],
         color: 'purple',
         recommended: true,
+        kirvanoLink: "https://kirvano.com/checkout/LINK_DO_PLANO_AVANCADO"
     },
     {
         name: 'Premium' as SubscriptionPlan,
         price: '37,90',
         description: 'A experiência completa com acompanhamento personalizado.',
         features: [
-            'Tudo do Pro',
+            'Tudo do Avançado',
             'Check-ins de foco com a IA',
             'Sessões de "coach" por IA',
             'Conteúdo e cursos avançados',
@@ -48,11 +49,12 @@ const plansData = [
         ],
         color: 'sky',
         recommended: false,
+        kirvanoLink: "https://kirvano.com/checkout/LINK_DO_PLANO_PREMIUM"
     },
 ];
 
 
-const PricingPage: React.FC<PricingPageProps> = ({ user, onSelectPlan }) => {
+const PricingPage: React.FC<PricingPageProps> = ({ user }) => {
     const currentUserPlan = user?.subscriptionPlan;
     
     return (
@@ -94,10 +96,11 @@ const PricingPage: React.FC<PricingPageProps> = ({ user, onSelectPlan }) => {
                                     </li>
                                 ))}
                              </ul>
-                             <button 
-                                onClick={() => onSelectPlan(plan.name)} 
-                                disabled={isCurrentPlan}
-                                className={`w-full font-bold py-3 rounded-lg transition-colors mt-auto ${
+                             <a 
+                                href={isCurrentPlan ? undefined : plan.kirvanoLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`w-full text-center font-bold py-3 rounded-lg transition-colors mt-auto ${
                                     isCurrentPlan 
                                     ? 'bg-slate-600 text-gray-400 cursor-not-allowed'
                                     : plan.recommended 
@@ -105,7 +108,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ user, onSelectPlan }) => {
                                         : 'bg-slate-700 text-white hover:bg-slate-600'
                                 }`}>
                                 {buttonText}
-                            </button>
+                            </a>
                         </div>
                     )
                 })}

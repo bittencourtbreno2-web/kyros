@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type SubscriptionPlan = 'Free' | 'Essencial' | 'Pro' | 'Premium';
+export type SubscriptionPlan = 'Free' | 'Essencial' | 'Avançado' | 'Premium';
 export type SubscriptionStatus = 'Active' | 'Cancelled' | 'Expired' | 'Inactive';
 
 export interface User {

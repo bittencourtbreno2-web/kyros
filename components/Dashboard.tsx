@@ -184,9 +184,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas,
         return u;
       });
       localStorage.setItem('kyros_users', JSON.stringify(updatedUsers));
-      
-      const sessionUser = { ...userData, email: user.email, isSubscribed: user.subscriptionStatus === 'Active' };
-      localStorage.setItem('kyros_session', JSON.stringify(sessionUser));
     }
   }, [userData, dailyGoals, libraryItems, user?.email]);
 
@@ -254,8 +251,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas,
   const epForNextLevel = currentLevelInfo ? currentLevelInfo.max + 1 - userData.ep : 0;
   const levelProgress = currentLevelInfo ? ((userData.ep - currentLevelInfo.min) / (currentLevelInfo.max - currentLevelInfo.min + 1)) * 100 : 0;
 
-  const hasProAccess = userData.subscriptionPlan === 'Pro' || userData.subscriptionPlan === 'Premium';
-  const lockedTabs = ['progress', 'evolution'].filter(() => !hasProAccess);
+  const hasAdvancedAccess = userData.subscriptionPlan === 'Avançado' || userData.subscriptionPlan === 'Premium';
+  const lockedTabs = ['progress', 'evolution'].filter(() => !hasAdvancedAccess);
   const isCurrentTabLocked = lockedTabs.includes(activeTab);
 
   const renderContent = () => {
@@ -264,7 +261,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas,
             <div className="flex flex-col items-center justify-center h-full text-center animate-fade-in p-10 glass-card rounded-lg">
                 <div className="p-3 mb-4 bg-yellow-400/10 rounded-full text-yellow-400"><LockIcon className="w-8 h-8"/></div>
                 <h2 className="text-2xl font-bold font-display text-yellow-400 mb-2">Recurso Premium</h2>
-                <p className="text-gray-300 max-w-md mx-auto mb-6">Esta funcionalidade está disponível nos planos Pro e Premium. Faça upgrade para acessar relatórios detalhados e ferramentas de evolução.</p>
+                <p className="text-gray-300 max-w-md mx-auto mb-6">Esta funcionalidade está disponível nos planos Avançado e Premium. Faça upgrade para acessar relatórios detalhados e ferramentas de evolução.</p>
                 <button onClick={onViewPlans} className="bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">Ver Planos</button>
             </div>
         );
