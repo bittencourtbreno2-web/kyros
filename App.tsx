@@ -118,15 +118,20 @@ const App: React.FC = () => {
     const loggedInUser = createInitialUser(updatedUser);
     setUser(loggedInUser);
     localStorage.setItem('kyros_session', JSON.stringify({ email: loggedInUser.email }));
-    
-    const isSubscribedAndActive = loggedInUser.subscriptionStatus === 'Active' && updatedUser.subscriptionEndDate && new Date(updatedUser.subscriptionEndDate) > new Date();
-
-    if (isSubscribedAndActive) {
-        setView('dashboard');
-    } else {
-        setView('subscription');
-    }
     setModal(null);
+
+    const selectedPlan = localStorage.getItem('kyros_selected_plan') as SubscriptionPlan | null;
+    if (selectedPlan) {
+        localStorage.removeItem('kyros_selected_plan');
+        handleSubscription(selectedPlan, loggedInUser);
+    } else {
+        const isSubscribedAndActive = loggedInUser.subscriptionStatus === 'Active' && updatedUser.subscriptionEndDate && new Date(updatedUser.subscriptionEndDate) > new Date();
+        if (isSubscribedAndActive) {
+            setView('dashboard');
+        } else {
+            setView('subscription');
+        }
+    }
   };
   
   const handleGoogleLogin = () => {
@@ -161,15 +166,20 @@ const App: React.FC = () => {
     const loggedInUser = createInitialUser(foundUser);
     setUser(loggedInUser);
     localStorage.setItem('kyros_session', JSON.stringify({ email: loggedInUser.email }));
-    
-    const isSubscribedAndActive = loggedInUser.subscriptionStatus === 'Active' && foundUser.subscriptionEndDate && new Date(foundUser.subscriptionEndDate) > new Date();
-
-    if (isSubscribedAndActive) {
-        setView('dashboard');
-    } else {
-        setView('subscription');
-    }
     setModal(null);
+
+    const selectedPlan = localStorage.getItem('kyros_selected_plan') as SubscriptionPlan | null;
+    if (selectedPlan) {
+        localStorage.removeItem('kyros_selected_plan');
+        handleSubscription(selectedPlan, loggedInUser);
+    } else {
+        const isSubscribedAndActive = loggedInUser.subscriptionStatus === 'Active' && foundUser.subscriptionEndDate && new Date(foundUser.subscriptionEndDate) > new Date();
+        if (isSubscribedAndActive) {
+            setView('dashboard');
+        } else {
+            setView('subscription');
+        }
+    }
   }
 
   const handleSignup = (name: string, email: string, pass: string) => {
@@ -204,8 +214,15 @@ const App: React.FC = () => {
     const loggedInUser = createInitialUser(newUser);
     setUser(loggedInUser);
     localStorage.setItem('kyros_session', JSON.stringify({ email: loggedInUser.email }));
-    setView('subscription');
     setModal(null);
+    
+    const selectedPlan = localStorage.getItem('kyros_selected_plan') as SubscriptionPlan | null;
+    if (selectedPlan) {
+        localStorage.removeItem('kyros_selected_plan');
+        handleSubscription(selectedPlan, loggedInUser);
+    } else {
+        setView('subscription');
+    }
   };
 
   const handleLogout = () => {
@@ -235,14 +252,14 @@ const App: React.FC = () => {
     setView('dashboard');
   };
   
-  const handleSubscription = (plan: SubscriptionPlan) => {
-      if (!user || plan === 'Free') return;
+  const handleSubscription = (plan: SubscriptionPlan, subscribingUser: User | null) => {
+      if (!subscribingUser || plan === 'Free') return;
 
       const now = new Date();
       const endDate = new Date(new Date().setDate(now.getDate() + 30));
 
       const fullUpdatedUser = updateUserInStorage({
-          email: user.email,
+          email: subscribingUser.email,
           subscriptionPlan: plan,
           subscriptionStatus: 'Active',
           subscriptionStartDate: now.toISOString(),
@@ -252,9 +269,8 @@ const App: React.FC = () => {
 
       const updatedUserObject = createInitialUser(fullUpdatedUser);
       setUser(updatedUserObject);
-      localStorage.setItem('kyros_session', JSON.stringify({ email: updatedUserObject.email }));
-
-      if ((initialLifeAreas || fullUpdatedUser.lifeAreas || []).length === 0) {
+      
+      if (!fullUpdatedUser.lifeAreas || fullUpdatedUser.lifeAreas.length === 0) {
           setView('quiz');
       } else {
           setView('dashboard');
@@ -275,8 +291,17 @@ const App: React.FC = () => {
       setModal({type: type});
   }
 
+  const switchAuthModal = (type: 'login' | 'signup') => {
+      clearAuthMessages();
+      setPassword('');
+      setPasswordStrength({score: 0, feedback: ''});
+      setShowPassword(false);
+      setModal({ type });
+  }
+
   const renderModalContent = () => {
     if (!modal) return null;
+    const selectedPlan = localStorage.getItem('kyros_selected_plan');
 
     switch (modal.type) {
       case 'signup':
@@ -284,7 +309,11 @@ const App: React.FC = () => {
         return (
           <>
             <h2 className="text-2xl font-bold text-white mb-2 font-display">Crie sua Conta</h2>
-            <p className="text-gray-400 mb-6">Comece a construir sua melhor versão hoje.</p>
+            {selectedPlan ? (
+              <p className="text-gray-400 mb-6">Para ativar o plano <span className="font-bold text-purple-400">{selectedPlan}</span>, crie sua conta abaixo.</p>
+            ) : (
+              <p className="text-gray-400 mb-6">Comece a construir sua melhor versão hoje.</p>
+            )}
             <form onSubmit={(e) => { e.preventDefault(); handleSignup(e.currentTarget.name_signup.value, e.currentTarget.email_signup.value, password); }}>
               <input type="text" name="name_signup" placeholder="Nome" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500" required />
               <input type="email" name="email_signup" placeholder="Email" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500" required />
@@ -305,6 +334,12 @@ const App: React.FC = () => {
               {authError && <p className="text-red-400 text-sm mb-4 text-center">{authError}</p>}
               <button type="submit" className="w-full bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors disabled:opacity-50">Criar Conta</button>
             </form>
+            <p className="text-center text-sm text-gray-400 mt-4">
+                Já tem uma conta?{' '}
+                <button onClick={() => switchAuthModal('login')} className="font-semibold text-purple-400 hover:underline">
+                    Faça login
+                </button>
+            </p>
              <div className="text-center text-gray-400 my-4 text-sm">ou</div>
              <div className="flex gap-4">
                 <button onClick={handleGoogleLogin} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-full transition-colors flex items-center justify-center gap-2">Google</button>
@@ -316,7 +351,11 @@ const App: React.FC = () => {
          return (
           <>
             <h2 className="text-2xl font-bold text-white mb-2 font-display">Bem-vindo(a) de volta!</h2>
-            <p className="text-gray-400 mb-6">Continue sua jornada de progresso.</p>
+            {selectedPlan ? (
+              <p className="text-gray-400 mb-6">Para ativar o plano <span className="font-bold text-purple-400">{selectedPlan}</span>, faça login na sua conta.</p>
+            ) : (
+              <p className="text-gray-400 mb-6">Continue sua jornada de progresso.</p>
+            )}
             <form onSubmit={(e) => { e.preventDefault(); handleLogin(e.currentTarget.email_login.value, e.currentTarget.password_login.value);}}>
                <input type="email" name="email_login" placeholder="Email" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500" required />
                <div className="relative mb-2">
@@ -332,6 +371,12 @@ const App: React.FC = () => {
               {authSuccess && <p className="text-green-400 text-sm mb-4 text-center">{authSuccess}</p>}
               <button type="submit" className="w-full bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">Entrar</button>
             </form>
+            <p className="text-center text-sm text-gray-400 mt-4">
+                Não tem uma conta?{' '}
+                <button onClick={() => switchAuthModal('signup')} className="font-semibold text-purple-400 hover:underline">
+                    Crie uma agora
+                </button>
+            </p>
              <div className="text-center text-gray-400 my-4 text-sm">ou</div>
              <div className="flex gap-4">
                 <button onClick={handleGoogleLogin} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-full transition-colors flex items-center justify-center gap-2">Google</button>
@@ -359,7 +404,7 @@ const App: React.FC = () => {
             <h2 className="text-2xl font-bold text-white mb-2 font-display">Confirmar Assinatura</h2>
             <p className="text-gray-400 mb-4">Você está assinando o plano <span className={`font-bold text-purple-400`}>{planData.plan}</span>.</p>
             <p className="text-gray-400">Esta é uma simulação. Nenhum valor será cobrado.</p>
-            <button onClick={() => handleSubscription(planData.plan)} className="mt-6 w-full bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">
+            <button onClick={() => handleSubscription(planData.plan, user)} className="mt-6 w-full bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">
                 Confirmar e Iniciar
             </button>
           </div>
@@ -380,14 +425,14 @@ const App: React.FC = () => {
   const renderView = () => {
     switch(view) {
       case 'subscription':
-        return <Subscription user={user} onSubscribe={() => handleSubscription('Pro')} onLogout={handleLogout} />;
+        return <Subscription user={user} onSubscribe={(plan) => handleSubscription(plan, user)} onLogout={handleLogout} />;
       case 'quiz':
         return <Quiz onComplete={handleQuizComplete} userName={user?.name || 'Usuário'} />;
       case 'dashboard':
         return <Dashboard user={user} onLogout={handleLogout} initialLifeAreas={initialLifeAreas} />;
       case 'landing':
       default:
-        return <LandingPage setModal={setModal} openModal={openModal} />;
+        return <LandingPage setModal={setModal} openModal={openModal} user={user} />;
     }
   };
 
