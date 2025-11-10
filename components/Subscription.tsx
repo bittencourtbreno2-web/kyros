@@ -35,7 +35,7 @@ const Subscription: React.FC<SubscriptionProps> = ({ user, onLogout }) => {
                         <li className="flex items-start"><SparklesIcon className="w-6 h-6 text-purple-400 mr-3 flex-shrink-0" /> Acesso ilimitado à comunidade</li>
                         <li className="flex items-start"><VideoIcon className="w-6 h-6 text-purple-400 mr-3 flex-shrink-0" /> Áudios e meditações diárias</li>
                     </ul>
-                    <a href="https://kirvano.com/checkout/LINK_DO_PLANO_AVANCADO" target="_blank" rel="noopener noreferrer" className="w-full bg-purple-600 text-white font-bold py-3 rounded-lg hover:bg-purple-700 transition-colors mt-auto transform hover:scale-105 text-center">
+                    <a href="https://pay.kirvano.com/be0d0695-5fbe-49c6-83a2-8c2bd9f2021f" target="_blank" rel="noopener noreferrer" className="w-full bg-purple-600 text-white font-bold py-3 rounded-lg hover:bg-purple-700 transition-colors mt-auto transform hover:scale-105 text-center">
                         Assinar e Desbloquear Acesso
                     </a>
                 </div>

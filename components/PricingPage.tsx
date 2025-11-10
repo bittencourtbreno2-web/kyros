@@ -19,7 +19,7 @@ const plansData = [
         ],
         color: 'slate',
         recommended: false,
-        kirvanoLink: "https://kirvano.com/checkout/LINK_DO_PLANO_ESSENCIAL"
+        kirvanoLink: "https://pay.kirvano.com/627962ae-437c-48a5-a90c-9aea1835d34f"
     },
     {
         name: 'Avançado' as SubscriptionPlan,
@@ -34,7 +34,7 @@ const plansData = [
         ],
         color: 'purple',
         recommended: true,
-        kirvanoLink: "https://kirvano.com/checkout/LINK_DO_PLANO_AVANCADO"
+        kirvanoLink: "https://pay.kirvano.com/be0d0695-5fbe-49c6-83a2-8c2bd9f2021f"
     },
     {
         name: 'Premium' as SubscriptionPlan,
@@ -49,7 +49,7 @@ const plansData = [
         ],
         color: 'sky',
         recommended: false,
-        kirvanoLink: "https://kirvano.com/checkout/LINK_DO_PLANO_PREMIUM"
+        kirvanoLink: "https://pay.kirvano.com/31300091-fd80-4c32-a483-2de4e0dabe2a"
     },
 ];
 

@@ -21,9 +21,9 @@ const testimonials = [
 ];
 
 const plans: { name: SubscriptionPlan; price: string; description: string; color: string; kirvanoLink: string; }[] = [
-    { name: "Essencial", price: "9,90", description: "Ideal para começar seu progresso pessoal.", color: "slate", kirvanoLink: "https://kirvano.com/checkout/LINK_DO_PLANO_ESSENCIAL" },
-    { name: "Avançado", price: "19,90", description: "Inclui metas de carreira e relatórios semanais.", color: "purple", kirvanoLink: "https://kirvano.com/checkout/LINK_DO_PLANO_AVANCADO" },
-    { name: "Premium", price: "37,90", description: "Tudo do Avançado + check-ins de foco e coach por IA.", color: "sky", kirvanoLink: "https://kirvano.com/checkout/LINK_DO_PLANO_PREMIUM" },
+    { name: "Essencial", price: "9,90", description: "Ideal para começar seu progresso pessoal.", color: "slate", kirvanoLink: "https://pay.kirvano.com/627962ae-437c-48a5-a90c-9aea1835d34f" },
+    { name: "Avançado", price: "19,90", description: "Inclui metas de carreira e relatórios semanais.", color: "purple", kirvanoLink: "https://pay.kirvano.com/be0d0695-5fbe-49c6-83a2-8c2bd9f2021f" },
+    { name: "Premium", price: "37,90", description: "Tudo do Avançado + check-ins de foco e coach por IA.", color: "sky", kirvanoLink: "https://pay.kirvano.com/31300091-fd80-4c32-a483-2de4e0dabe2a" },
 ];
 
 const LandingPage: React.FC<LandingPageProps> = ({ openModal }) => {
