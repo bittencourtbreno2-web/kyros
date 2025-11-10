@@ -117,9 +117,10 @@ interface DashboardProps {
   user: User | null;
   onLogout: () => void;
   initialLifeAreas: LifeArea[];
+  onViewPlans: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas, onViewPlans }) => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'progress' | 'evolution' | 'library' | 'community' | 'account'>('dashboard');
   const [dailyGoals, setDailyGoals] = useState<DailyGoal[]>(initialDailyGoals);
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>(mockLibraryItems);
@@ -264,7 +265,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas 
                 <div className="p-3 mb-4 bg-yellow-400/10 rounded-full text-yellow-400"><LockIcon className="w-8 h-8"/></div>
                 <h2 className="text-2xl font-bold font-display text-yellow-400 mb-2">Recurso Premium</h2>
                 <p className="text-gray-300 max-w-md mx-auto mb-6">Esta funcionalidade está disponível nos planos Pro e Premium. Faça upgrade para acessar relatórios detalhados e ferramentas de evolução.</p>
-                <button className="bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">Ver Planos</button>
+                <button onClick={onViewPlans} className="bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">Ver Planos</button>
             </div>
         );
     }
@@ -484,7 +485,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas 
                                 }
                             </p>
                         </div>
-                        <button className="bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg text-sm hover:bg-purple-700 transition-colors">Gerenciar</button>
+                        <button onClick={onViewPlans} className="bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg text-sm hover:bg-purple-700 transition-colors">Gerenciar</button>
                     </div>
                 </div>
             </div>

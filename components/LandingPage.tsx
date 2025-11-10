@@ -1,12 +1,11 @@
 import React from 'react';
-import type { Feature, SubscriptionPlan, User } from '../types';
+import type { SubscriptionPlan } from '../types';
 import Footer from './Footer';
-import { CheckCircleIcon, ChartBarIcon, SparklesIcon, ZapIcon, BookOpenIcon, AwardIcon, VideoIcon } from './icons';
+import { ChartBarIcon, SparklesIcon, ZapIcon, BookOpenIcon } from './icons';
 
 interface LandingPageProps {
-  setModal: (modal: { type: 'signup' | 'login' | 'payment' | 'featureInfo'; data?: Feature | { plan: SubscriptionPlan } } | null) => void;
+  onSelectPlan: (plan: SubscriptionPlan) => void;
   openModal: (type: 'signup' | 'login') => void;
-  user: User | null;
 }
 
 const demoPlanTasks = [
@@ -28,16 +27,7 @@ const plans: { name: SubscriptionPlan; price: string; description: string; color
     { name: "Premium", price: "37,90", description: "Tudo do Pro + check-ins de foco e coach por IA.", color: "sky" },
 ];
 
-const LandingPage: React.FC<LandingPageProps> = ({ setModal, openModal, user }) => {
-
-  const handlePlanClick = (plan: SubscriptionPlan) => {
-    if (user) {
-      setModal({ type: 'payment', data: { plan } });
-    } else {
-      localStorage.setItem('kyros_selected_plan', plan);
-      openModal('signup');
-    }
-  };
+const LandingPage: React.FC<LandingPageProps> = ({ onSelectPlan, openModal }) => {
 
   return (
     <main>
@@ -99,7 +89,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ setModal, openModal, user }) 
                             </div>
                             <div className="flex items-baseline gap-4 w-full sm:w-auto">
                                 <p className="text-3xl font-extrabold text-white">R${plan.price}<span className="text-base font-normal text-gray-400">/mês</span></p>
-                                <button onClick={() => handlePlanClick(plan.name)} className={`w-full sm:w-auto bg-purple-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-purple-700 transition-colors`}>Ativar Plano</button>
+                                <button onClick={() => onSelectPlan(plan.name)} className={`w-full sm:w-auto bg-purple-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-purple-700 transition-colors`}>Ativar Plano</button>
                             </div>
                         </div>
                     ))}

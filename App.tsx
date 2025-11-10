@@ -5,11 +5,12 @@ import Quiz from './components/Quiz';
 import Dashboard from './components/Dashboard';
 import Subscription from './components/Subscription';
 import Modal from './components/Modal';
+import PricingPage from './components/PricingPage'; // Import new component
 import type { User, LifeArea, Feature, QuizAnswer, RegisteredUser, SubscriptionPlan } from './types';
 import { EyeIcon, EyeSlashIcon, AppleIcon } from './components/icons';
 
 const App: React.FC = () => {
-  const [view, setView] = useState<'landing' | 'quiz' | 'dashboard' | 'subscription'>('landing');
+  const [view, setView] = useState<'landing' | 'quiz' | 'dashboard' | 'subscription' | 'pricing'>('landing');
   const [user, setUser] = useState<User | null>(null);
   const [quizResults, setQuizResults] = useState<QuizAnswer[]>([]);
   const [initialLifeAreas, setInitialLifeAreas] = useState<LifeArea[]>([]);
@@ -63,7 +64,7 @@ const App: React.FC = () => {
                     if (fullUser.subscriptionStatus === 'Active') { // It just expired
                          updateUserInStorage({ email: fullUser.email, subscriptionStatus: 'Expired' });
                     }
-                    setView('subscription');
+                    setView('pricing');
                 }
             } else {
                 handleLogout();
@@ -129,7 +130,7 @@ const App: React.FC = () => {
         if (isSubscribedAndActive) {
             setView('dashboard');
         } else {
-            setView('subscription');
+            setView('pricing');
         }
     }
   };
@@ -177,7 +178,7 @@ const App: React.FC = () => {
         if (isSubscribedAndActive) {
             setView('dashboard');
         } else {
-            setView('subscription');
+            setView('pricing');
         }
     }
   }
@@ -221,7 +222,7 @@ const App: React.FC = () => {
         localStorage.removeItem('kyros_selected_plan');
         handleSubscription(selectedPlan, loggedInUser);
     } else {
-        setView('subscription');
+        setView('pricing');
     }
   };
 
@@ -276,6 +277,15 @@ const App: React.FC = () => {
           setView('dashboard');
       }
       setModal(null);
+  };
+  
+  const handleSelectPlan = (plan: SubscriptionPlan) => {
+    if (user) {
+      setModal({ type: 'payment', data: { plan } });
+    } else {
+      localStorage.setItem('kyros_selected_plan', plan);
+      openModal('signup');
+    }
   };
 
   const clearAuthMessages = () => {
@@ -425,14 +435,16 @@ const App: React.FC = () => {
   const renderView = () => {
     switch(view) {
       case 'subscription':
-        return <Subscription user={user} onSubscribe={(plan) => handleSubscription(plan, user)} onLogout={handleLogout} />;
+        return <Subscription user={user} onSubscribe={(plan) => handleSelectPlan(plan)} onLogout={handleLogout} />;
       case 'quiz':
         return <Quiz onComplete={handleQuizComplete} userName={user?.name || 'Usuário'} />;
       case 'dashboard':
-        return <Dashboard user={user} onLogout={handleLogout} initialLifeAreas={initialLifeAreas} />;
+        return <Dashboard user={user} onLogout={handleLogout} initialLifeAreas={initialLifeAreas} onViewPlans={() => setView('pricing')} />;
+      case 'pricing':
+        return <PricingPage user={user} onSelectPlan={handleSelectPlan} />;
       case 'landing':
       default:
-        return <LandingPage setModal={setModal} openModal={openModal} user={user} />;
+        return <LandingPage onSelectPlan={handleSelectPlan} openModal={openModal} />;
     }
   };
 
