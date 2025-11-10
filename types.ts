@@ -1,16 +1,38 @@
 import React from 'react';
 
+export type SubscriptionPlan = 'Free' | 'Essencial' | 'Pro' | 'Premium';
+export type SubscriptionStatus = 'Active' | 'Cancelled' | 'Expired' | 'Inactive';
+
 export interface User {
   name: string;
+  email: string;
   ep: number;
   level: string;
   badges: string[];
+  subscriptionPlan: SubscriptionPlan;
+  subscriptionStatus: SubscriptionStatus;
 }
 
 export interface RegisteredUser {
+  id: string; // Unique user ID
   name: string;
   email: string;
-  password?: string; // Em um app real, isso seria um hash. Opcional para logins sociais.
+  password?: string; // In a real app, this would be a hash. Optional for social logins.
+  photoUrl?: string;
+  createdAt: string;
+  lastLogin: string;
+  
+  subscriptionPlan: SubscriptionPlan;
+  subscriptionStatus: SubscriptionStatus;
+  subscriptionStartDate?: string;
+  subscriptionEndDate?: string;
+
+  lifeAreas?: LifeArea[];
+  ep?: number;
+  level?: string;
+  badges?: string[];
+  dailyGoals?: DailyGoal[];
+  libraryItems?: LibraryItem[];
 }
 
 export interface LifeArea {

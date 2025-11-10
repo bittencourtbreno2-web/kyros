@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import type { User, LifeArea, DailyGoal, LibraryItem, CommunityPost, ProgressData, DailyContent, Book, Reward, LeaderboardUser } from '../types';
-import { HomeIcon, ChartBarIcon, BookOpenIcon, SparklesIcon, AccountIcon, ZapIcon, AwardIcon as BadgeIcon } from './icons';
+import type { User, LifeArea, DailyGoal, LibraryItem, CommunityPost, ProgressData, DailyContent, Book, Reward, LeaderboardUser, RegisteredUser } from '../types';
+import { HomeIcon, ChartBarIcon, BookOpenIcon, SparklesIcon, AccountIcon, ZapIcon, AwardIcon as BadgeIcon, LockIcon } from './icons';
 import RadarChart from './RadarChart';
+import LineChart from './LineChart';
 
 
 // MOCK DATA 
@@ -64,7 +65,7 @@ const mockRewards: Reward[] = [
 const mockLeaderboard: LeaderboardUser[] = [
     { rank: 1, name: "Ana Silva", ep: 2580, isCurrentUser: false },
     { rank: 2, name: "Carlos Oliveira", ep: 2340, isCurrentUser: false },
-    { rank: 3, name: "Você", ep: 1250, isCurrentUser: true },
+    { rank: 3, name: "Você", ep: 1350, isCurrentUser: true },
     { rank: 4, name: "Mariana Costa", ep: 1190, isCurrentUser: false },
     { rank: 5, name: "Pedro Almeida", ep: 980, isCurrentUser: false },
 ];
@@ -85,6 +86,32 @@ const getLevel = (ep: number): string => {
     return "Iniciante";
 };
 
+const getRegisteredUsers = (): RegisteredUser[] => {
+    try {
+        const users = localStorage.getItem('kyros_users');
+        return users ? JSON.parse(users) : [];
+    } catch (error) {
+        console.error("Failed to parse users from localStorage", error);
+        return [];
+    }
+};
+
+const weeklyProgressData = [
+    { day: "Dom", ep: 1150 },
+    { day: "Seg", ep: 1180 },
+    { day: "Ter", ep: 1170 },
+    { day: "Qua", ep: 1210 },
+    { day: "Qui", ep: 1250 },
+    { day: "Sex", ep: 1290 },
+    { day: "Sáb", ep: 1350 }
+];
+
+const aiInsights = [
+    "Sua consistência nos últimos 4 dias resultou em um ganho de 140 EP. Excelente!",
+    "Notamos que suas metas de 'Mente' são as mais concluídas. Continue nutrindo seu conhecimento.",
+    "Você está a apenas 150 EP de alcançar o nível 'Avançado'. Mantenha o foco!"
+];
+
 
 interface DashboardProps {
   user: User | null;
@@ -99,16 +126,70 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas 
   const [expandedItemId, setExpandedItemId] = useState<number | null>(null);
   const [dailyActivityResponse, setDailyActivityResponse] = useState('');
   const [isActivitySaved, setIsActivitySaved] = useState(false);
-  const [goalToVerify, setGoalToVerify] = useState<DailyGoal | null>(null);
-  const [verificationResponse, setVerificationResponse] = useState('');
+  const [userData, setUserData] = useState<User>(user || { name: 'Usuário', email: '', ep: 0, level: 'Iniciante', badges: [], subscriptionPlan: 'Free', subscriptionStatus: 'Inactive' });
+  const [fullUserDetails, setFullUserDetails] = useState<RegisteredUser | null>(null);
+  const [showWelcome, setShowWelcome] = useState(true);
 
-  const [userData, setUserData] = useState<User>({
-      name: user?.name || 'Usuário',
-      ep: 1250,
-      level: 'Intermediário',
-      badges: ['Comprometido com o Progresso', 'Semana do Despertar']
-  });
+  // Welcome message timer
+  useEffect(() => {
+    const timer = setTimeout(() => setShowWelcome(false), 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
+  // Update local state if user prop changes
+  useEffect(() => {
+      if(user) setUserData(user);
+  }, [user]);
+
+  // Load user-specific progress data from localStorage on mount
+  useEffect(() => {
+    if (user?.email) {
+      const users = getRegisteredUsers();
+      const currentUserData = users.find(u => u.email === user.email);
+      if (currentUserData) {
+        setFullUserDetails(currentUserData);
+        setDailyGoals(currentUserData.dailyGoals ?? initialDailyGoals);
+        setLibraryItems(currentUserData.libraryItems ?? mockLibraryItems);
+        
+        const currentEP = currentUserData.ep ?? 0;
+        setUserData(prev => ({
+            ...prev,
+            name: currentUserData.name,
+            ep: currentEP,
+            level: currentUserData.level ?? getLevel(currentEP),
+            badges: currentUserData.badges ?? [],
+            subscriptionPlan: currentUserData.subscriptionPlan,
+            subscriptionStatus: currentUserData.subscriptionStatus,
+        }))
+      }
+    }
+  }, [user?.email]);
+
+  // Save all progress data to localStorage whenever it changes
+  useEffect(() => {
+    if (user?.email) {
+      const users = getRegisteredUsers();
+      const updatedUsers = users.map(u => {
+        if (u.email === user.email) {
+          return {
+            ...u,
+            ep: userData.ep,
+            level: userData.level,
+            badges: userData.badges,
+            dailyGoals: dailyGoals,
+            libraryItems: libraryItems,
+          };
+        }
+        return u;
+      });
+      localStorage.setItem('kyros_users', JSON.stringify(updatedUsers));
+      
+      const sessionUser = { ...userData, email: user.email, isSubscribed: user.subscriptionStatus === 'Active' };
+      localStorage.setItem('kyros_session', JSON.stringify(sessionUser));
+    }
+  }, [userData, dailyGoals, libraryItems, user?.email]);
+
+  // Update user level based on EP
   useEffect(() => {
     const newLevel = getLevel(userData.ep);
     if (newLevel !== userData.level) {
@@ -118,40 +199,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas 
 
 
   const handleGoalVerification = (goal: DailyGoal) => {
-     if(goal.completed) {
-        // Un-complete the goal and deduct points
-        setUserData(prev => ({...prev, ep: prev.ep - goal.ep}));
-        setDailyGoals(goals => goals.map(g => g.id === goal.id ? { ...g, completed: false } : g));
-     } else {
-        setGoalToVerify(goal);
-     }
-  };
-  
-  const submitVerification = () => {
-    if (!goalToVerify || !verificationResponse.trim()) return;
+    const isCompleting = !goal.completed;
 
-    // Award points and mark as complete
-    setUserData(prev => ({...prev, ep: prev.ep + goalToVerify.ep}));
-    setDailyGoals(goals => 
-        goals.map(g => 
-            g.id === goalToVerify.id ? { ...g, completed: true } : g
-        )
+    setDailyGoals(goals =>
+      goals.map(g => (g.id === goal.id ? { ...g, completed: isCompleting } : g))
     );
 
-    // Add reflection to library
-    const newReflection: LibraryItem = {
-        id: Date.now(),
-        type: 'Reflexão de Meta',
-        title: goalToVerify.text,
-        date: 'Hoje',
-        status: 'Concluída',
-        content: `Prompt: "${goalToVerify.reflectionPrompt}"\n\nMinha Reflexão:\n${verificationResponse}`
-    };
-    setLibraryItems(prev => [newReflection, ...prev]);
-
-    // Reset verification state
-    setGoalToVerify(null);
-    setVerificationResponse('');
+    if (isCompleting) {
+      setUserData(prev => ({ ...prev, ep: prev.ep + goal.ep }));
+    } else {
+      setUserData(prev => ({ ...prev, ep: prev.ep - goal.ep }));
+    }
   };
 
   const handleSaveActivity = () => {
@@ -195,20 +253,58 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas 
   const epForNextLevel = currentLevelInfo ? currentLevelInfo.max + 1 - userData.ep : 0;
   const levelProgress = currentLevelInfo ? ((userData.ep - currentLevelInfo.min) / (currentLevelInfo.max - currentLevelInfo.min + 1)) * 100 : 0;
 
+  const hasProAccess = userData.subscriptionPlan === 'Pro' || userData.subscriptionPlan === 'Premium';
+  const lockedTabs = ['progress', 'evolution'].filter(() => !hasProAccess);
+  const isCurrentTabLocked = lockedTabs.includes(activeTab);
 
   const renderContent = () => {
+    if (isCurrentTabLocked) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-center animate-fade-in p-10 glass-card rounded-lg">
+                <div className="p-3 mb-4 bg-yellow-400/10 rounded-full text-yellow-400"><LockIcon className="w-8 h-8"/></div>
+                <h2 className="text-2xl font-bold font-display text-yellow-400 mb-2">Recurso Premium</h2>
+                <p className="text-gray-300 max-w-md mx-auto mb-6">Esta funcionalidade está disponível nos planos Pro e Premium. Faça upgrade para acessar relatórios detalhados e ferramentas de evolução.</p>
+                <button className="bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">Ver Planos</button>
+            </div>
+        );
+    }
+    
     switch(activeTab) {
       case 'progress':
         return (
             <div className="animate-fade-in">
                 <h1 className="text-3xl font-bold font-display text-white mb-6">Meu Progresso</h1>
-                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                    
                     <div className="glass-card p-6 rounded-lg lg:col-span-2">
-                         <h2 className="text-xl font-semibold font-display text-white mb-2">Visão Geral</h2>
-                         <p className="text-sm text-gray-400 mb-4">Seu equilíbrio de vida com base no quiz inicial.</p>
-                         <div className="h-80">
+                        <h2 className="text-xl font-semibold font-display text-white mb-2">Equilíbrio de Vida</h2>
+                        <p className="text-sm text-gray-400 mb-4">Sua visão geral com base no quiz inicial.</p>
+                        <div className="h-80">
                             <RadarChart data={initialLifeAreas} />
-                         </div>
+                        </div>
+                    </div>
+
+                    <div className="lg:col-span-3 space-y-6">
+                        <div className="glass-card p-6 rounded-lg">
+                            <h2 className="text-xl font-semibold font-display text-white mb-4">Evolução de EP na Semana</h2>
+                            <div className="h-64">
+                                <LineChart data={weeklyProgressData} />
+                            </div>
+                        </div>
+                        <div className="glass-card p-6 rounded-lg">
+                            <h2 className="text-xl font-semibold font-display text-white mb-4 flex items-center">
+                                <SparklesIcon className="w-6 h-6 text-yellow-400 mr-2"/>
+                                Insights da IA
+                            </h2>
+                            <ul className="space-y-3">
+                                {aiInsights.map((insight, index) => (
+                                    <li key={index} className="text-gray-300 text-sm flex items-start">
+                                        <span className="text-sky-400 mr-3 mt-1">&#9656;</span>
+                                        {insight}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -218,7 +314,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas 
             <div className="animate-fade-in">
                 <h1 className="text-3xl font-bold font-display text-white mb-6">Minha Evolução</h1>
                 
-                {/* Level & Points Summary */}
                 <div className="glass-card p-6 rounded-lg mb-8">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className={`text-2xl font-bold font-display ${currentLevelInfo.color}`}>{userData.level}</h2>
@@ -233,7 +328,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas 
                 </div>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Rewards Store */}
                     <div>
                         <h2 className="text-2xl font-semibold font-display text-white mb-4">Loja de Recompensas</h2>
                         <div className="space-y-4">
@@ -251,7 +345,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas 
                             ))}
                         </div>
                     </div>
-                     {/* Achievements & Leaderboard */}
                     <div className="space-y-8">
                          <div>
                             <h2 className="text-2xl font-semibold font-display text-white mb-4">Conquistas</h2>
@@ -365,16 +458,33 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas 
          return (
             <div className="animate-fade-in max-w-lg">
                 <h2 className="text-3xl font-bold font-display text-white mb-6">Minha Conta</h2>
-                <div className="glass-card rounded-lg p-6">
-                    <div className="space-y-4 mb-8">
+                <div className="glass-card rounded-lg p-6 mb-6">
+                    <h3 className="text-xl font-semibold font-display text-white mb-4">Informações do Perfil</h3>
+                    <div className="space-y-4">
                       <div>
                           <label className="block text-gray-400 mb-1 text-sm">Nome</label>
                           <input type="text" value={userData.name} readOnly className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white" />
                       </div>
                        <div>
                           <label className="block text-gray-400 mb-1 text-sm">Email</label>
-                          <input type="email" value="user@example.com" readOnly className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white" />
+                          <input type="email" value={user?.email} readOnly className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white" />
                       </div>
+                    </div>
+                </div>
+                 <div className="glass-card rounded-lg p-6">
+                    <h3 className="text-xl font-semibold font-display text-white mb-4">Assinatura</h3>
+                    <div className="bg-slate-800/50 p-4 rounded-lg flex justify-between items-center">
+                        <div>
+                            <p className="text-sm text-gray-400">Seu plano atual</p>
+                            <p className="text-lg font-bold text-purple-400">{userData.subscriptionPlan}</p>
+                            <p className="text-sm text-gray-400">
+                                {userData.subscriptionStatus === 'Active' && fullUserDetails?.subscriptionEndDate
+                                    ? `Expira em: ${new Date(fullUserDetails.subscriptionEndDate).toLocaleDateString('pt-BR')}`
+                                    : `Status: ${userData.subscriptionStatus}`
+                                }
+                            </p>
+                        </div>
+                        <button className="bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg text-sm hover:bg-purple-700 transition-colors">Gerenciar</button>
                     </div>
                 </div>
             </div>
@@ -383,6 +493,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas 
       default:
         return (
             <div className="animate-fade-in">
+              {showWelcome && (
+                <div className="bg-slate-800/50 border border-slate-700 p-4 rounded-lg mb-6 text-center animate-fade-in">
+                    <p className="text-gray-200">Bem-vindo de volta, <span className="font-bold">{userData.name}</span>. Seu último plano de ação foi carregado com sucesso.</p>
+                </div>
+              )}
               <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
                 <div>
                     <h1 className="text-3xl font-bold font-display text-white">Sua Jornada Diária</h1>
@@ -441,22 +556,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas 
                            ))}
                         </div>
                     </div>
-                     {goalToVerify && (
-                        <div className="glass-card p-6 rounded-lg animate-fade-in">
-                           <h3 className="text-lg font-semibold text-white mb-2">Verificação da Meta</h3>
-                           <p className="text-sm text-gray-300 mb-4">{goalToVerify.reflectionPrompt}</p>
-                           <textarea 
-                                value={verificationResponse}
-                                onChange={(e) => setVerificationResponse(e.target.value)}
-                                className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-green-500 text-sm h-24 mb-4"
-                                placeholder="Sua reflexão..."
-                            />
-                            <div className="flex gap-2">
-                                <button onClick={submitVerification} disabled={!verificationResponse.trim()} className="flex-1 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 disabled:bg-slate-600">Concluir (+{goalToVerify.ep} EP)</button>
-                                <button onClick={() => setGoalToVerify(null)} className="bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-slate-700">Cancelar</button>
-                            </div>
-                        </div>
-                    )}
                 </div>
               </div>
             </div>
@@ -472,12 +571,22 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas 
            <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('dashboard'); }} className="lg:hidden animated-gradient-text">K</a>
         </div>
         <div className="flex-grow">
-          {navItems.map(item => (
-            <button key={item.id} onClick={() => setActiveTab(item.id as any)} className={`w-full flex items-center p-3 rounded-lg text-left transition-colors mb-2 ${activeTab === item.id ? 'bg-purple-600 text-white' : 'text-gray-400 hover:bg-slate-700/50 hover:text-white'}`}>
-              {item.icon}
-              <span className="hidden lg:inline ml-4 font-semibold">{item.label}</span>
-            </button>
-          ))}
+          {navItems.map(item => {
+            const isLocked = lockedTabs.includes(item.id);
+            return (
+                <button 
+                    key={item.id} 
+                    onClick={() => setActiveTab(item.id as any)} 
+                    className={`w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors mb-2 ${activeTab === item.id ? 'bg-purple-600 text-white' : 'text-gray-400 hover:bg-slate-700/50 hover:text-white'}`}
+                >
+                  <div className="flex items-center">
+                    {item.icon}
+                    <span className="hidden lg:inline ml-4 font-semibold">{item.label}</span>
+                  </div>
+                  {isLocked && <LockIcon className="hidden lg:inline text-yellow-400"/>}
+                </button>
+            )
+          })}
         </div>
         <div>
            <button onClick={onLogout} className="w-full flex items-center p-3 rounded-lg text-left text-gray-400 hover:bg-slate-700/50 hover:text-white transition-colors">

@@ -22,12 +22,6 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, onOpenLogin, onOpenSign
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navLinks = [
-    { name: 'Benefícios', href: '#benefits' },
-    { name: 'Planos', href: '#pricing' },
-    { name: 'FAQ', href: '#faq' },
-  ];
-
   const handleNavClick = (e: React.MouseEvent, action: () => void) => {
     e.preventDefault();
     action();
@@ -46,14 +40,6 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, onOpenLogin, onOpenSign
           <a href="#" onClick={handleLogoClick} className="text-2xl font-bold text-white font-display">
             Kyros<span className="animated-gradient-text">AI</span>
           </a>
-
-          <nav className="hidden md:flex items-center space-x-8">
-            {navLinks.map((link) => (
-              <a key={link.name} href={link.href} className="text-gray-300 hover:text-white transition-colors">
-                {link.name}
-              </a>
-            ))}
-          </nav>
 
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
@@ -90,12 +76,6 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, onOpenLogin, onOpenSign
       {isOpen && (
         <div className="md:hidden bg-slate-900/95 backdrop-blur-lg pb-4">
           <nav className="flex flex-col items-center space-y-4 pt-4">
-            {navLinks.map((link) => (
-              <a key={link.name} href={link.href} onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white transition-colors text-lg">
-                {link.name}
-              </a>
-            ))}
-            <div className="border-t border-slate-700 w-1/2 my-2"></div>
             {user ? (
                <>
                 <button onClick={(e) => handleNavClick(e, onGoToDashboard)} className="text-gray-300 hover:text-white transition-colors text-lg">Dashboard</button>

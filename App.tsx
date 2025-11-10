@@ -3,16 +3,17 @@ import Header from './components/Header';
 import LandingPage from './components/LandingPage';
 import Quiz from './components/Quiz';
 import Dashboard from './components/Dashboard';
+import Subscription from './components/Subscription';
 import Modal from './components/Modal';
-import type { User, LifeArea, Feature, QuizAnswer, RegisteredUser } from './types';
-import { EyeIcon, EyeSlashIcon } from './components/icons';
+import type { User, LifeArea, Feature, QuizAnswer, RegisteredUser, SubscriptionPlan } from './types';
+import { EyeIcon, EyeSlashIcon, AppleIcon } from './components/icons';
 
 const App: React.FC = () => {
-  const [view, setView] = useState<'landing' | 'quiz' | 'dashboard'>('landing');
+  const [view, setView] = useState<'landing' | 'quiz' | 'dashboard' | 'subscription'>('landing');
   const [user, setUser] = useState<User | null>(null);
   const [quizResults, setQuizResults] = useState<QuizAnswer[]>([]);
   const [initialLifeAreas, setInitialLifeAreas] = useState<LifeArea[]>([]);
-  const [modal, setModal] = useState<{ type: 'signup' | 'login' | 'payment' | 'featureInfo' | 'forgotPassword' | 'resetConfirmation'; data?: Feature; email?: string } | null>(null);
+  const [modal, setModal] = useState<{ type: 'signup' | 'login' | 'payment' | 'featureInfo' | 'forgotPassword' | 'resetConfirmation'; data?: Feature | { plan: SubscriptionPlan }; email?: string } | null>(null);
 
   // States for auth forms
   const [authError, setAuthError] = useState<string | null>(null);
@@ -20,22 +21,6 @@ const App: React.FC = () => {
   const [password, setPassword] = useState('');
   const [passwordStrength, setPasswordStrength] = useState({ score: 0, feedback: '' });
   const [showPassword, setShowPassword] = useState(false);
-
-  // --- Persistent Auth Logic ---
-  useEffect(() => {
-    // On app load, check for a logged-in user session
-    try {
-        const session = localStorage.getItem('kyros_session');
-        if (session) {
-            const loggedInUser: User = JSON.parse(session);
-            setUser(loggedInUser);
-            setView('dashboard');
-        }
-    } catch (error) {
-        console.error("Failed to parse session from localStorage", error);
-        localStorage.removeItem('kyros_session');
-    }
-  }, []);
 
   const getRegisteredUsers = (): RegisteredUser[] => {
     try {
@@ -46,12 +31,58 @@ const App: React.FC = () => {
         return [];
     }
   };
+
+  const updateUserInStorage = (updatedUser: Partial<RegisteredUser> & { email: string }): RegisteredUser | undefined => {
+      const users = getRegisteredUsers();
+      const updatedUsers = users.map(u => 
+          u.email === updatedUser.email ? { ...u, ...updatedUser } : u
+      );
+      localStorage.setItem('kyros_users', JSON.stringify(updatedUsers));
+      return updatedUsers.find(u => u.email === updatedUser.email);
+  };
+
+  // --- Persistent Auth Logic ---
+  useEffect(() => {
+    try {
+        const session = localStorage.getItem('kyros_session');
+        if (session) {
+            const sessionUser: { email: string } = JSON.parse(session);
+            const users = getRegisteredUsers();
+            const fullUser = users.find(u => u.email === sessionUser.email);
+            
+            if (fullUser) {
+                setInitialLifeAreas(fullUser.lifeAreas || []);
+                const freshUser = createInitialUser(fullUser);
+                setUser(freshUser);
+
+                const isSubscribedAndActive = fullUser.subscriptionStatus === 'Active' && fullUser.subscriptionEndDate && new Date(fullUser.subscriptionEndDate) > new Date();
+
+                if (isSubscribedAndActive) {
+                    setView('dashboard');
+                } else {
+                    if (fullUser.subscriptionStatus === 'Active') { // It just expired
+                         updateUserInStorage({ email: fullUser.email, subscriptionStatus: 'Expired' });
+                    }
+                    setView('subscription');
+                }
+            } else {
+                handleLogout();
+            }
+        }
+    } catch (error) {
+        console.error("Failed to parse session from localStorage", error);
+        localStorage.removeItem('kyros_session');
+    }
+  }, []);
   
-  const createInitialUser = (name: string): User => ({
-      name,
-      ep: 0,
-      level: 'Iniciante',
-      badges: []
+  const createInitialUser = (registeredUser: RegisteredUser): User => ({
+      name: registeredUser.name,
+      email: registeredUser.email,
+      ep: registeredUser.ep ?? 0,
+      level: registeredUser.level ?? 'Iniciante',
+      badges: registeredUser.badges ?? [],
+      subscriptionPlan: registeredUser.subscriptionPlan,
+      subscriptionStatus: registeredUser.subscriptionStatus,
   });
   
   const checkPasswordStrength = (pass: string) => {
@@ -75,15 +106,26 @@ const App: React.FC = () => {
     const users = getRegisteredUsers();
     const foundUser = users.find(u => u.email === email);
 
-    if (!foundUser || foundUser.password !== pass) { // Em app real, comparar hash
+    if (!foundUser || foundUser.password !== pass) {
       setAuthError('E-mail ou senha inválidos. Tente novamente.');
       return;
     }
 
-    const loggedInUser = createInitialUser(foundUser.name);
+    const updatedUser = updateUserInStorage({ email: foundUser.email, lastLogin: new Date().toISOString() });
+    if (!updatedUser) return;
+
+    setInitialLifeAreas(updatedUser.lifeAreas || []);
+    const loggedInUser = createInitialUser(updatedUser);
     setUser(loggedInUser);
-    localStorage.setItem('kyros_session', JSON.stringify(loggedInUser));
-    setView('dashboard');
+    localStorage.setItem('kyros_session', JSON.stringify({ email: loggedInUser.email }));
+    
+    const isSubscribedAndActive = loggedInUser.subscriptionStatus === 'Active' && updatedUser.subscriptionEndDate && new Date(updatedUser.subscriptionEndDate) > new Date();
+
+    if (isSubscribedAndActive) {
+        setView('dashboard');
+    } else {
+        setView('subscription');
+    }
     setModal(null);
   };
   
@@ -91,27 +133,42 @@ const App: React.FC = () => {
     clearAuthMessages();
     const googleEmail = 'usuario.google@kyros.ai';
     const googleName = 'Usuário Google';
+    const now = new Date().toISOString();
 
     const users = getRegisteredUsers();
     let foundUser = users.find(u => u.email === googleEmail);
 
     if (!foundUser) {
-        // If user doesn't exist, create a new one (sign up with Google)
         const newGoogleUser: RegisteredUser = {
+            id: `google-${Date.now()}`,
             name: googleName,
             email: googleEmail,
-            // No password for social logins
+            createdAt: now,
+            lastLogin: now,
+            subscriptionPlan: 'Free',
+            subscriptionStatus: 'Inactive',
+            lifeAreas: [],
         };
         users.push(newGoogleUser);
         localStorage.setItem('kyros_users', JSON.stringify(users));
         foundUser = newGoogleUser;
+    } else {
+        foundUser.lastLogin = now;
+        updateUserInStorage({email: foundUser.email, lastLogin: now});
     }
 
-    // Log the user in
-    const loggedInUser = createInitialUser(foundUser.name);
+    setInitialLifeAreas(foundUser.lifeAreas || []);
+    const loggedInUser = createInitialUser(foundUser);
     setUser(loggedInUser);
-    localStorage.setItem('kyros_session', JSON.stringify(loggedInUser));
-    setView('dashboard');
+    localStorage.setItem('kyros_session', JSON.stringify({ email: loggedInUser.email }));
+    
+    const isSubscribedAndActive = loggedInUser.subscriptionStatus === 'Active' && foundUser.subscriptionEndDate && new Date(foundUser.subscriptionEndDate) > new Date();
+
+    if (isSubscribedAndActive) {
+        setView('dashboard');
+    } else {
+        setView('subscription');
+    }
     setModal(null);
   }
 
@@ -128,15 +185,26 @@ const App: React.FC = () => {
       return;
     }
 
-    const newUser: RegisteredUser = { name, email, password: pass };
+    const now = new Date().toISOString();
+    const newUser: RegisteredUser = { 
+        id: `user-${Date.now()}`,
+        name,
+        email,
+        password: pass,
+        createdAt: now,
+        lastLogin: now,
+        subscriptionPlan: 'Free',
+        subscriptionStatus: 'Inactive',
+        lifeAreas: [],
+    };
     users.push(newUser);
     localStorage.setItem('kyros_users', JSON.stringify(users));
+    setInitialLifeAreas([]);
     
-    // Directly log the user in after signup
-    const loggedInUser = createInitialUser(name);
+    const loggedInUser = createInitialUser(newUser);
     setUser(loggedInUser);
-    localStorage.setItem('kyros_session', JSON.stringify(loggedInUser));
-    setView('dashboard');
+    localStorage.setItem('kyros_session', JSON.stringify({ email: loggedInUser.email }));
+    setView('subscription');
     setModal(null);
   };
 
@@ -150,7 +218,6 @@ const App: React.FC = () => {
       clearAuthMessages();
       const users = getRegisteredUsers();
       if(users.some(u => u.email === email)) {
-          // Simulate sending reset link
           setAuthSuccess(`Um link para redefinir sua senha foi enviado para ${email}.`);
       } else {
           setAuthError("Nenhuma conta encontrada com este e-mail.");
@@ -160,9 +227,41 @@ const App: React.FC = () => {
   const handleQuizComplete = (answers: QuizAnswer[], finalScores: LifeArea[]) => {
     setQuizResults(answers);
     setInitialLifeAreas(finalScores);
+    
+    if (user) {
+        updateUserInStorage({ email: user.email, lifeAreas: finalScores });
+    }
+
     setView('dashboard');
   };
   
+  const handleSubscription = (plan: SubscriptionPlan) => {
+      if (!user || plan === 'Free') return;
+
+      const now = new Date();
+      const endDate = new Date(new Date().setDate(now.getDate() + 30));
+
+      const fullUpdatedUser = updateUserInStorage({
+          email: user.email,
+          subscriptionPlan: plan,
+          subscriptionStatus: 'Active',
+          subscriptionStartDate: now.toISOString(),
+          subscriptionEndDate: endDate.toISOString(),
+      });
+      if(!fullUpdatedUser) return;
+
+      const updatedUserObject = createInitialUser(fullUpdatedUser);
+      setUser(updatedUserObject);
+      localStorage.setItem('kyros_session', JSON.stringify({ email: updatedUserObject.email }));
+
+      if ((initialLifeAreas || fullUpdatedUser.lifeAreas || []).length === 0) {
+          setView('quiz');
+      } else {
+          setView('dashboard');
+      }
+      setModal(null);
+  };
+
   const clearAuthMessages = () => {
       setAuthError(null);
       setAuthSuccess(null);
@@ -208,8 +307,8 @@ const App: React.FC = () => {
             </form>
              <div className="text-center text-gray-400 my-4 text-sm">ou</div>
              <div className="flex gap-4">
-                <button onClick={handleGoogleLogin} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-full transition-colors">Google</button>
-                <button className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-full transition-colors">Facebook</button>
+                <button onClick={handleGoogleLogin} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-full transition-colors flex items-center justify-center gap-2">Google</button>
+                <button className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-full transition-colors flex items-center justify-center gap-2"><AppleIcon /> Apple</button>
             </div>
           </>
         );
@@ -235,8 +334,8 @@ const App: React.FC = () => {
             </form>
              <div className="text-center text-gray-400 my-4 text-sm">ou</div>
              <div className="flex gap-4">
-                <button onClick={handleGoogleLogin} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-full transition-colors">Google</button>
-                <button className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-full transition-colors">Facebook</button>
+                <button onClick={handleGoogleLogin} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-full transition-colors flex items-center justify-center gap-2">Google</button>
+                <button className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-full transition-colors flex items-center justify-center gap-2"><AppleIcon/> Apple</button>
             </div>
           </>
         );
@@ -254,12 +353,14 @@ const App: React.FC = () => {
              </>
           );
       case 'payment':
+        const planData = modal.data as { plan: SubscriptionPlan };
         return (
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-white mb-2 font-display">Assinatura</h2>
-            <p className="text-gray-400">Esta é uma simulação de checkout. A funcionalidade de pagamento real será implementada em breve.</p>
-            <button onClick={() => setModal(null)} className="mt-6 w-full bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">
-                Entendido
+            <h2 className="text-2xl font-bold text-white mb-2 font-display">Confirmar Assinatura</h2>
+            <p className="text-gray-400 mb-4">Você está assinando o plano <span className={`font-bold text-purple-400`}>{planData.plan}</span>.</p>
+            <p className="text-gray-400">Esta é uma simulação. Nenhum valor será cobrado.</p>
+            <button onClick={() => handleSubscription(planData.plan)} className="mt-6 w-full bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">
+                Confirmar e Iniciar
             </button>
           </div>
         );
@@ -278,6 +379,8 @@ const App: React.FC = () => {
 
   const renderView = () => {
     switch(view) {
+      case 'subscription':
+        return <Subscription user={user} onSubscribe={() => handleSubscription('Pro')} onLogout={handleLogout} />;
       case 'quiz':
         return <Quiz onComplete={handleQuizComplete} userName={user?.name || 'Usuário'} />;
       case 'dashboard':
