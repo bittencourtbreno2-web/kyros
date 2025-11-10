@@ -23,8 +23,8 @@ const dailyContentData: DailyContent = {
     bookSuggestion: "'Essencialismo'"
   },
   bookRecommendations: [
-    { title: "Essencialismo", author: "Greg McKeown", description: "Aprenda a disciplinada busca por menos, porém melhor.", coverUrl: "" },
-    { title: "Trabalho Focado", author: "Cal Newport", description: "Como ter sucesso em um mundo distraído.", coverUrl: "" }
+    { title: "Essencialismo", author: "Greg McKeown", description: "O Essencialismo, de Greg McKeown, não é sobre fazer mais em menos tempo. É sobre fazer apenas as coisas certas. O livro ensina um método para identificar o que é absolutamente essencial, eliminando todo o resto, para que possamos dar nossa maior contribuição possível às coisas que realmente importam. Através de uma abordagem sistemática, McKeown mostra como aplicar um critério mais seletivo em tudo o que fazemos, negociar com confiança e gerenciar nosso tempo e energia para focar no que é vital, resultando em uma vida mais significativa e produtiva.", coverUrl: "" },
+    { title: "Trabalho Focado", author: "Cal Newport", description: "Em 'Trabalho Focado', Cal Newport argumenta que a habilidade de se concentrar sem distrações em uma tarefa cognitivamente exigente é uma das competências mais valiosas e raras no mundo atual. Ele apresenta um conjunto de regras e estratégias para cultivar uma ética de trabalho focado, ensinando como estruturar o dia, treinar a mente para resistir à distração e abandonar a mentalidade de 'estar sempre online'. O livro é um guia prático para quem busca produzir resultados de alta qualidade e encontrar mais satisfação em seu trabalho.", coverUrl: "" }
   ],
   challenge: {
     title: "Reflexão sobre Produtividade",
@@ -255,7 +255,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas,
   const levelProgress = currentLevelInfo ? ((userData.ep - currentLevelInfo.min) / (currentLevelInfo.max - currentLevelInfo.min + 1)) * 100 : 0;
 
   const plan = userData.subscriptionPlan;
-  const isProgressLocked = !['Essencial', 'Avançado', 'Premium'].includes(plan);
+  const isProgressLocked = !['Avançado', 'Premium'].includes(plan);
   const isEvolutionLocked = plan !== 'Premium';
 
   const lockedTabs: string[] = [];
