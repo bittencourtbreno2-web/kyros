@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { User, LifeArea, DailyGoal, LibraryItem, CommunityPost, ProgressData, DailyContent, Book, Reward, LeaderboardUser, RegisteredUser } from '../types';
-import { HomeIcon, ChartBarIcon, BookOpenIcon, SparklesIcon, AccountIcon, ZapIcon, AwardIcon as BadgeIcon, LockIcon } from './icons';
+import { HomeIcon, ChartBarIcon, BookOpenIcon, SparklesIcon, AccountIcon, ZapIcon, AwardIcon, LockIcon, UsersIcon, ClipboardIcon } from './icons';
 import RadarChart from './RadarChart';
 import LineChart from './LineChart';
 
@@ -58,7 +58,7 @@ const mockCommunityPosts: CommunityPost[] = [
 const mockRewards: Reward[] = [
     { id: 1, title: "Análise de Perfil Personalizada", description: "Receba um relatório detalhado da IA sobre seus pontos fortes.", cost: 2000, icon: <ZapIcon /> },
     { id: 2, title: "Consultoria Premium com IA", description: "Uma sessão de planejamento aprofundada com a IA.", cost: 3000, icon: <SparklesIcon /> },
-    { id: 3, title: "1 Mês de Plano Essencial", description: "Desbloqueie os recursos do plano Essencial por um mês.", cost: 50000, icon: <BadgeIcon /> },
+    { id: 3, title: "1 Mês de Plano Essencial", description: "Desbloqueie os recursos do plano Essencial por um mês.", cost: 50000, icon: <AwardIcon /> },
     { id: 4, title: "E-book: Foco e Disciplina", description: "Um guia exclusivo para aprimorar sua concentração.", cost: 1500, icon: <BookOpenIcon /> },
 ];
 
@@ -121,7 +121,7 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas, onViewPlans }) => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'progress' | 'evolution' | 'library' | 'community' | 'account'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'progress' | 'evolution' | 'library' | 'community' | 'rewards' | 'account'>('dashboard');
   const [dailyGoals, setDailyGoals] = useState<DailyGoal[]>(initialDailyGoals);
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>(mockLibraryItems);
   const [expandedItemId, setExpandedItemId] = useState<number | null>(null);
@@ -130,6 +130,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas,
   const [userData, setUserData] = useState<User>(user || { name: 'Usuário', email: '', ep: 0, level: 'Iniciante', badges: [], subscriptionPlan: 'Free', subscriptionStatus: 'Inactive' });
   const [fullUserDetails, setFullUserDetails] = useState<RegisteredUser | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [copied, setCopied] = useState(false);
+
 
   // Welcome message timer
   useEffect(() => {
@@ -241,9 +243,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas,
   const navItems = [
     { id: 'dashboard', label: 'Jornada Diária', icon: <HomeIcon /> },
     { id: 'progress', label: 'Progresso & Metas', icon: <ChartBarIcon /> },
-    { id: 'evolution', label: 'Evolução', icon: <ZapIcon /> },
     { id: 'library', label: 'Biblioteca', icon: <BookOpenIcon /> },
     { id: 'community', label: 'Comunidade', icon: <SparklesIcon /> },
+    { id: 'rewards', label: 'Recompensas', icon: <AwardIcon /> },
+    { id: 'evolution', label: 'Evolução', icon: <ZapIcon /> },
     { id: 'account', label: 'Conta', icon: <AccountIcon /> },
   ];
   
@@ -251,9 +254,23 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas,
   const epForNextLevel = currentLevelInfo ? currentLevelInfo.max + 1 - userData.ep : 0;
   const levelProgress = currentLevelInfo ? ((userData.ep - currentLevelInfo.min) / (currentLevelInfo.max - currentLevelInfo.min + 1)) * 100 : 0;
 
-  const hasAdvancedAccess = userData.subscriptionPlan === 'Avançado' || userData.subscriptionPlan === 'Premium';
-  const lockedTabs = ['progress', 'evolution'].filter(() => !hasAdvancedAccess);
+  const plan = userData.subscriptionPlan;
+  const isProgressLocked = !['Essencial', 'Avançado', 'Premium'].includes(plan);
+  const isEvolutionLocked = plan !== 'Premium';
+
+  const lockedTabs: string[] = [];
+  if (isProgressLocked) lockedTabs.push('progress');
+  if (isEvolutionLocked) lockedTabs.push('evolution');
+  
   const isCurrentTabLocked = lockedTabs.includes(activeTab);
+
+  const referralLink = fullUserDetails ? `https://kyros.ai/?ref=${fullUserDetails.id}` : '';
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(referralLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const renderContent = () => {
     if (isCurrentTabLocked) {
@@ -261,7 +278,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas,
             <div className="flex flex-col items-center justify-center h-full text-center animate-fade-in p-10 glass-card rounded-lg">
                 <div className="p-3 mb-4 bg-yellow-400/10 rounded-full text-yellow-400"><LockIcon className="w-8 h-8"/></div>
                 <h2 className="text-2xl font-bold font-display text-yellow-400 mb-2">Recurso Premium</h2>
-                <p className="text-gray-300 max-w-md mx-auto mb-6">Esta funcionalidade está disponível nos planos Avançado e Premium. Faça upgrade para acessar relatórios detalhados e ferramentas de evolução.</p>
+                <p className="text-gray-300 max-w-md mx-auto mb-6">Esta funcionalidade está disponível em planos superiores. Faça upgrade para desbloquear seu potencial.</p>
                 <button onClick={onViewPlans} className="bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">Ver Planos</button>
             </div>
         );
@@ -326,52 +343,72 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas,
                 </div>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div>
-                        <h2 className="text-2xl font-semibold font-display text-white mb-4">Loja de Recompensas</h2>
-                        <div className="space-y-4">
-                            {mockRewards.map(reward => (
-                                <div key={reward.id} className="glass-card p-4 rounded-lg flex items-center justify-between">
-                                    <div className="flex items-center">
-                                        <div className="text-purple-400 mr-4">{reward.icon}</div>
-                                        <div>
-                                            <p className="font-semibold text-white">{reward.title}</p>
-                                            <p className="text-sm text-gray-400">{reward.cost.toLocaleString()} EP</p>
-                                        </div>
-                                    </div>
-                                    <button disabled={userData.ep < reward.cost} className="bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg text-sm hover:bg-purple-700 transition-colors disabled:bg-slate-600 disabled:cursor-not-allowed">Trocar</button>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
                     <div className="space-y-8">
+                        <div className="glass-card p-6 rounded-lg">
+                           <h2 className="text-2xl font-semibold font-display text-white mb-4">Indique e Ganhe</h2>
+                           <p className="text-gray-300 mb-4">Ganhe <span className="font-bold text-yellow-400">500 EP</span> para cada amigo que assinar um plano com seu link!</p>
+                           <div className="relative mb-4">
+                               <input type="text" readOnly value={referralLink} className="w-full bg-slate-800/60 border border-slate-600 rounded-lg py-2 pl-3 pr-24 text-gray-300 text-sm" />
+                               <button onClick={handleCopy} className="absolute inset-y-0 right-0 m-1.5 px-3 bg-purple-600 text-white text-xs font-bold rounded-md hover:bg-purple-700 flex items-center gap-1">
+                                  <ClipboardIcon className="w-4 h-4" />
+                                  {copied ? 'Copiado!' : 'Copiar'}
+                               </button>
+                           </div>
+                           <div className="flex items-center text-sm text-gray-300">
+                               <UsersIcon className="w-5 h-5 mr-2 text-sky-400"/>
+                               <span>Amigos indicados: <span className="font-bold text-white">{fullUserDetails?.referrals ?? 0}</span></span>
+                           </div>
+                        </div>
                          <div>
                             <h2 className="text-2xl font-semibold font-display text-white mb-4">Conquistas</h2>
                             <div className="flex flex-wrap gap-4">
                                 {userData.badges.map(badge => (
                                     <div key={badge} className="bg-yellow-500/10 text-yellow-300 flex items-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold">
-                                        <BadgeIcon className="w-5 h-5" />
+                                        <AwardIcon className="w-5 h-5" />
                                         <span>{badge}</span>
                                     </div>
                                 ))}
                             </div>
                         </div>
-                        <div>
-                            <h2 className="text-2xl font-semibold font-display text-white mb-4">Leaderboard Semanal</h2>
-                            <div className="space-y-2">
-                               {mockLeaderboard.map(lbUser => (
-                                 <div key={lbUser.rank} className={`glass-card p-3 rounded-lg flex items-center justify-between text-sm ${lbUser.isCurrentUser ? 'border-2 border-purple-500' : 'border border-transparent'}`}>
-                                    <div className="flex items-center">
-                                        <span className="font-bold text-gray-400 w-6">{lbUser.rank}</span>
-                                        <p className="font-semibold text-white ml-2">{lbUser.name}</p>
-                                    </div>
-                                    <p className="font-bold text-sky-400">{lbUser.ep.toLocaleString()} EP</p>
-                                 </div>
-                               ))}
-                            </div>
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-semibold font-display text-white mb-4">Leaderboard Semanal</h2>
+                        <div className="space-y-2">
+                           {mockLeaderboard.map(lbUser => (
+                             <div key={lbUser.rank} className={`glass-card p-3 rounded-lg flex items-center justify-between text-sm ${lbUser.isCurrentUser ? 'border-2 border-purple-500' : 'border border-transparent'}`}>
+                                <div className="flex items-center">
+                                    <span className="font-bold text-gray-400 w-6">{lbUser.rank}</span>
+                                    <p className="font-semibold text-white ml-2">{lbUser.name}</p>
+                                </div>
+                                <p className="font-bold text-sky-400">{lbUser.ep.toLocaleString()} EP</p>
+                             </div>
+                           ))}
                         </div>
                     </div>
                 </div>
 
+            </div>
+        );
+      case 'rewards':
+        return (
+            <div className="animate-fade-in">
+                <h1 className="text-3xl font-bold font-display text-white mb-6">Loja de Recompensas</h1>
+                <p className="text-gray-300 max-w-2xl mb-8">Use seus Pontos de Evolução (EP) para resgatar recompensas exclusivas e acelerar sua jornada de desenvolvimento.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {mockRewards.map(reward => (
+                        <div key={reward.id} className="glass-card p-6 rounded-lg flex flex-col text-left transition-all hover:scale-105 hover:border-purple-500 border border-transparent">
+                            <div className="text-purple-400 mb-4 text-3xl">{reward.icon}</div>
+                            <h3 className="font-semibold text-white text-lg flex-grow mb-2">{reward.title}</h3>
+                            <p className="text-sm text-gray-400 mb-4 flex-grow">{reward.description}</p>
+                            <div className="flex justify-between items-center mt-4">
+                                <p className="text-xl font-bold text-sky-400">{reward.cost.toLocaleString()} EP</p>
+                                <button disabled={userData.ep < reward.cost} className="bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg text-sm hover:bg-purple-700 transition-colors disabled:bg-slate-600 disabled:cursor-not-allowed">
+                                    Resgatar
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         );
       case 'library':
@@ -581,7 +618,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialLifeAreas,
                     {item.icon}
                     <span className="hidden lg:inline ml-4 font-semibold">{item.label}</span>
                   </div>
-                  {isLocked && <LockIcon className="hidden lg:inline text-yellow-400"/>}
+                  {isLocked && <LockIcon className="hidden lg:inline w-5 h-5 text-yellow-400"/>}
                 </button>
             )
           })}

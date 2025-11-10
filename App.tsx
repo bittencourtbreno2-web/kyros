@@ -113,23 +113,25 @@ const App: React.FC = () => {
         if (session) {
             const sessionUser: { email: string } = JSON.parse(session);
             const users = getRegisteredUsers();
-            const fullUser = users.find(u => u.email === sessionUser.email);
+            let fullUser = users.find(u => u.email === sessionUser.email);
             
             if (fullUser) {
+                const isSubscribedAndActive = fullUser.subscriptionStatus === 'Active' && fullUser.subscriptionEndDate && new Date(fullUser.subscriptionEndDate) > new Date();
+
+                // If subscription expired since last visit, update it.
+                if (!isSubscribedAndActive && fullUser.subscriptionStatus === 'Active') {
+                     const updatedDetails = updateUserInStorage({ email: fullUser.email, subscriptionStatus: 'Expired' });
+                     if (updatedDetails) {
+                        fullUser = updatedDetails; // Use fresh data
+                     }
+                }
+
                 setInitialLifeAreas(fullUser.lifeAreas || []);
                 const freshUser = createInitialUser(fullUser);
                 setUser(freshUser);
-
-                const isSubscribedAndActive = fullUser.subscriptionStatus === 'Active' && fullUser.subscriptionEndDate && new Date(fullUser.subscriptionEndDate) > new Date();
-
-                if (isSubscribedAndActive) {
-                    setView('dashboard');
-                } else {
-                    if (fullUser.subscriptionStatus === 'Active') { // It just expired
-                         updateUserInStorage({ email: fullUser.email, subscriptionStatus: 'Expired' });
-                    }
-                    setView('pricing');
-                }
+                
+                // Always go to dashboard for logged-in users; dashboard handles feature locks.
+                setView('dashboard');
             } else {
                 handleLogout(); // Session exists but user not found, clear session.
             }
@@ -185,12 +187,8 @@ const App: React.FC = () => {
     localStorage.setItem('kyros_session', JSON.stringify({ email: loggedInUser.email }));
     setModal(null);
 
-    const isSubscribedAndActive = loggedInUser.subscriptionStatus === 'Active' && updatedUser.subscriptionEndDate && new Date(updatedUser.subscriptionEndDate) > new Date();
-    if (isSubscribedAndActive) {
-        setView('dashboard');
-    } else {
-        setView('pricing');
-    }
+    // Go to dashboard regardless of subscription, let dashboard handle locks.
+    setView('dashboard');
   };
   
   const handleGoogleLogin = () => {
@@ -226,13 +224,9 @@ const App: React.FC = () => {
     setUser(loggedInUser);
     localStorage.setItem('kyros_session', JSON.stringify({ email: loggedInUser.email }));
     setModal(null);
-
-    const isSubscribedAndActive = loggedInUser.subscriptionStatus === 'Active' && foundUser.subscriptionEndDate && new Date(foundUser.subscriptionEndDate) > new Date();
-    if (isSubscribedAndActive) {
-        setView('dashboard');
-    } else {
-        setView('pricing');
-    }
+    
+    // Go to dashboard regardless of subscription, let dashboard handle locks.
+    setView('dashboard');
   }
 
   const handleSignup = (name: string, email: string, pass: string) => {
@@ -268,7 +262,7 @@ const App: React.FC = () => {
     setUser(loggedInUser);
     localStorage.setItem('kyros_session', JSON.stringify({ email: loggedInUser.email }));
     setModal(null);
-    setView('pricing');
+    setView('quiz'); // Send new users to quiz for onboarding
   };
 
   const handleLogout = () => {

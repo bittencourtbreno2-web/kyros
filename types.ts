@@ -33,6 +33,7 @@ export interface RegisteredUser {
   badges?: string[];
   dailyGoals?: DailyGoal[];
   libraryItems?: LibraryItem[];
+  referrals?: number;
 }
 
 export interface LifeArea {
