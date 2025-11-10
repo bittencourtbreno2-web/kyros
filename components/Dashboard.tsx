@@ -41,7 +41,7 @@ const initialDailyGoals: DailyGoal[] = [
 
 const mockLibraryItems: LibraryItem[] = [
     {id: 1, type: 'Artigo', title: '5 Dicas para Aumentar sua Produtividade no Trabalho', date: 'Hoje', status: 'Lido', content: dailyContentData.text.content, notes: ''},
-    {id: 2, type: 'Livro', title: 'Essencialismo', date: 'Iniciado Hoje', status: 'Em Progresso', content: 'Resumo do livro...', notes: ''},
+    {id: 2, type: 'Livro', title: 'Essencialismo', date: 'Iniciado Hoje', status: 'Em Progresso', content: dailyContentData.bookRecommendations[0].description, notes: ''},
 ];
 
 const mockCommunityPosts: CommunityPost[] = [
