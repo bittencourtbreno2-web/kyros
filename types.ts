@@ -2,6 +2,16 @@ import React from 'react';
 
 export interface User {
   name: string;
+  ep: number;
+  level: string;
+  badges: string[];
+}
+
+export interface RegisteredUser {
+  name: string;
+  email: string;
+  password: string; // Em um app real, isso seria um hash
+  isVerified: boolean;
 }
 
 export interface LifeArea {
@@ -63,6 +73,9 @@ export interface DailyGoal {
     category: string;
     completed: boolean;
     ep: number;
+    type: 'reading' | 'meditation' | 'general';
+    value: number;
+    reflectionPrompt: string;
 }
 
 export interface LibraryItem {
@@ -88,4 +101,19 @@ export interface ProgressData {
     pagesRead: { current: number; goal: number };
     meditations: { current: number; goal: number };
     goalsCompleted: { current: number; goal: number };
+}
+
+export interface Reward {
+    id: number;
+    title: string;
+    description: string;
+    cost: number;
+    icon: React.ReactNode;
+}
+
+export interface LeaderboardUser {
+    rank: number;
+    name: string;
+    ep: number;
+    isCurrentUser: boolean;
 }

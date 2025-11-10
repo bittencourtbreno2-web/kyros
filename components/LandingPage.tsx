@@ -5,6 +5,7 @@ import { CheckCircleIcon, ChartBarIcon, SparklesIcon, ZapIcon, BookOpenIcon, Awa
 
 interface LandingPageProps {
   setModal: (modal: { type: 'signup' | 'login' | 'payment' | 'featureInfo'; data?: Feature } | null) => void;
+  openModal: (type: 'signup' | 'login') => void;
 }
 
 const features: Feature[] = [
@@ -25,7 +26,7 @@ const features: Feature[] = [
     },
   ];
 
-const LandingPage: React.FC<LandingPageProps> = ({ setModal }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ setModal, openModal }) => {
   const comparisonFeatures = [
     { name: 'Acesso ao conteúdo diário', basic: '1 por dia (limitado)', premium: 'Completo', vip: 'Completo + Antecipado' },
     { name: 'Metas', basic: '1 semanal (simples)', premium: 'Personalizadas', vip: 'Personalizadas com IA' },
@@ -50,10 +51,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ setModal }) => {
                     KyrosAI é seu parceiro de desenvolvimento pessoal, criando um plano de ação diário para você alcançar seus objetivos de vida e carreira.
                 </p>
                 <div className="animate-slide-in-up animation-delay-600">
-                    <button onClick={() => setModal({type: 'signup'})} className="bg-purple-600 text-white font-bold py-4 px-10 rounded-full shadow-lg hover:bg-purple-700 transition-transform hover:scale-105 transform">
-                        Começar minha jornada (Grátis)
+                    <button onClick={() => openModal('signup')} className="bg-purple-600 text-white font-bold py-4 px-10 rounded-full shadow-lg hover:bg-purple-700 transition-transform hover:scale-105 transform">
+                        Começar minha jornada
                     </button>
-                    <p className="text-gray-400 mt-3 text-sm">Não é necessário cartão de crédito.</p>
+                    <p className="text-gray-400 mt-3 text-sm">Crie sua conta para começar.</p>
                 </div>
             </div>
         </section>
@@ -84,7 +85,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ setModal }) => {
             <div className="container mx-auto px-6">
                 <div className="text-center mb-12">
                      <h2 className="text-3xl md:text-4xl font-bold text-white font-display">Planos Flexíveis para sua Jornada</h2>
-                    <p className="text-gray-400 mt-2 max-w-2xl mx-auto">Escolha o plano ideal e comece a transformar sua vida hoje com 7 dias de teste gratuito.</p>
+                    <p className="text-gray-400 mt-2 max-w-2xl mx-auto">Escolha o plano ideal e comece a transformar sua vida hoje.</p>
                 </div>
                 <div className="grid lg:grid-cols-3 gap-8 mb-16 items-stretch">
                     {/* Basic Plan */}
@@ -99,7 +100,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ setModal }) => {
                             <li className="flex items-start"><SparklesIcon className="w-6 h-6 text-green-400 mr-3 flex-shrink-0" /> Acesso limitado à comunidade</li>
                              <li className="flex items-start"><BookOpenIcon className="w-6 h-6 text-green-400 mr-3 flex-shrink-0" /> Sugestão de 5 págs de leitura diária</li>
                         </ul>
-                        <button onClick={() => setModal({type: 'payment'})} className="w-full bg-slate-700 text-white font-bold py-3 rounded-lg hover:bg-slate-600 transition-colors mt-auto">Comece Agora - 7 Dias Grátis</button>
+                        <button onClick={() => setModal({type: 'payment'})} className="w-full bg-slate-700 text-white font-bold py-3 rounded-lg hover:bg-slate-600 transition-colors mt-auto">Comece Agora</button>
                     </div>
                     {/* Premium Plan */}
                     <div className="glass-card border-2 border-purple-500 rounded-lg p-8 w-full relative flex flex-col">
@@ -115,7 +116,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ setModal }) => {
                             <li className="flex items-start"><SparklesIcon className="w-6 h-6 text-purple-400 mr-3 flex-shrink-0" /> Acesso ilimitado à comunidade</li>
                             <li className="flex items-start"><VideoIcon className="w-6 h-6 text-purple-400 mr-3 flex-shrink-0" /> Áudios e meditações diárias</li>
                         </ul>
-                        <button onClick={() => setModal({type: 'payment'})} className="w-full bg-purple-600 text-white font-bold py-3 rounded-lg hover:bg-purple-700 transition-colors mt-auto">Experimente Agora - 7 Dias Grátis</button>
+                        <button onClick={() => setModal({type: 'payment'})} className="w-full bg-purple-600 text-white font-bold py-3 rounded-lg hover:bg-purple-700 transition-colors mt-auto">Experimente Agora</button>
                     </div>
                      {/* VIP Plan */}
                     <div className="glass-card border border-slate-700 rounded-lg p-8 w-full flex flex-col">
@@ -129,7 +130,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ setModal }) => {
                             <li className="flex items-start"><AwardIcon className="w-6 h-6 text-sky-400 mr-3 flex-shrink-0" /> Certificados de conclusão</li>
                             <li className="flex items-start"><VideoIcon className="w-6 h-6 text-sky-400 mr-3 flex-shrink-0" /> Acesso antecipado e vídeos exclusivos</li>
                         </ul>
-                        <button onClick={() => setModal({type: 'payment'})} className="w-full bg-sky-500 text-white font-bold py-3 rounded-lg hover:bg-sky-600 transition-colors mt-auto">Acesse Agora - 7 Dias Grátis</button>
+                        <button onClick={() => setModal({type: 'payment'})} className="w-full bg-sky-500 text-white font-bold py-3 rounded-lg hover:bg-sky-600 transition-colors mt-auto">Acesse Agora</button>
                     </div>
                 </div>
                 

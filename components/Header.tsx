@@ -67,7 +67,7 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, onOpenLogin, onOpenSign
               <>
                 <button onClick={onOpenLogin} className="text-gray-300 hover:text-white transition-colors">Entrar</button>
                 <button onClick={onOpenSignup} className="bg-purple-600 text-white font-semibold py-2 px-4 rounded-full hover:bg-purple-700 transition-colors">
-                  Começar grátis
+                  Criar Conta
                 </button>
               </>
             )}
@@ -105,7 +105,7 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, onOpenLogin, onOpenSign
               <>
                 <button onClick={(e) => handleNavClick(e, onOpenLogin)} className="text-gray-300 hover:text-white transition-colors text-lg">Entrar</button>
                 <button onClick={(e) => handleNavClick(e, onOpenSignup)} className="bg-purple-600 w-1/2 text-center text-white font-semibold py-2 px-4 rounded-full hover:bg-purple-700 transition-colors">
-                  Começar grátis
+                  Criar Conta
                 </button>
               </>
             )}

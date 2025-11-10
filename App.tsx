@@ -4,93 +4,205 @@ import LandingPage from './components/LandingPage';
 import Quiz from './components/Quiz';
 import Dashboard from './components/Dashboard';
 import Modal from './components/Modal';
-import type { User, LifeArea, Feature, QuizAnswer } from './types';
+import type { User, LifeArea, Feature, QuizAnswer, RegisteredUser } from './types';
+import { EyeIcon, EyeSlashIcon } from './components/icons';
 
 const App: React.FC = () => {
   const [view, setView] = useState<'landing' | 'quiz' | 'dashboard'>('landing');
   const [user, setUser] = useState<User | null>(null);
   const [quizResults, setQuizResults] = useState<QuizAnswer[]>([]);
   const [initialLifeAreas, setInitialLifeAreas] = useState<LifeArea[]>([]);
-  const [modal, setModal] = useState<{ type: 'signup' | 'login' | 'payment' | 'featureInfo'; data?: Feature } | null>(null);
+  const [modal, setModal] = useState<{ type: 'signup' | 'login' | 'payment' | 'featureInfo' | 'emailVerification' | 'forgotPassword' | 'resetConfirmation'; data?: Feature; email?: string } | null>(null);
 
-  // State for simulated authentication
-  const [registeredUser, setRegisteredUser] = useState<{name: string, email: string, password: string} | null>(null);
-  const [loginError, setLoginError] = useState<string | null>(null);
+  // States for auth forms
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authSuccess, setAuthSuccess] = useState<string | null>(null);
+  const [password, setPassword] = useState('');
+  const [passwordStrength, setPasswordStrength] = useState({ score: 0, feedback: '' });
+  const [showPassword, setShowPassword] = useState(false);
 
+  // --- Persistent Auth Logic ---
   useEffect(() => {
-    // Scroll to top on view change
-    window.scrollTo(0, 0);
-  }, [view]);
-
-  const handleLogin = (email: string, password: string) => {
-    if (!registeredUser) {
-      setLoginError('Nenhum usuário cadastrado. Por favor, crie uma conta primeiro.');
-      return;
+    // On app load, check for a logged-in user session
+    try {
+        const session = localStorage.getItem('kyros_session');
+        if (session) {
+            const loggedInUser: User = JSON.parse(session);
+            setUser(loggedInUser);
+            setView('dashboard');
+        }
+    } catch (error) {
+        console.error("Failed to parse session from localStorage", error);
+        localStorage.removeItem('kyros_session');
     }
-    
-    if (registeredUser.email === email && registeredUser.password === password) {
-      setUser({ name: registeredUser.name });
-      setView('dashboard');
-      setModal(null);
-      setLoginError(null);
-    } else {
-      setLoginError('E-mail ou senha inválidos. Tente novamente.');
+    // Simulate email verification click from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('verify_email')) {
+        handleEmailVerification(urlParams.get('verify_email')!);
     }
-  };
+  }, []);
 
-  const handleSignup = (name: string, email: string, password: string) => {
-    const newUser = { name, email, password };
-    setRegisteredUser(newUser);
-    setUser({ name });
-    setView('quiz');
-    setModal(null);
-    setLoginError(null);
+  const getRegisteredUsers = (): RegisteredUser[] => {
+    try {
+        const users = localStorage.getItem('kyros_users');
+        return users ? JSON.parse(users) : [];
+    } catch (error) {
+        console.error("Failed to parse users from localStorage", error);
+        return [];
+    }
   };
   
+  const createInitialUser = (name: string): User => ({
+      name,
+      ep: 0,
+      level: 'Iniciante',
+      badges: []
+  });
+  
+  const checkPasswordStrength = (pass: string) => {
+      let score = 0;
+      let feedback = [];
+      if (pass.length < 8) {
+          feedback.push("Pelo menos 8 caracteres.");
+      } else {
+          score++;
+      }
+      if (/[A-Z]/.test(pass)) score++; else feedback.push("Use uma letra maiúscula.");
+      if (/[a-z]/.test(pass)) score++; else feedback.push("Use uma letra minúscula.");
+      if (/[0-9]/.test(pass)) score++; else feedback.push("Use um número.");
+      if (/[^A-Za-z0-9]/.test(pass)) score++; else feedback.push("Use um caractere especial.");
+      
+      setPasswordStrength({ score, feedback: feedback.join(' ') });
+  };
+
+  const handleLogin = (email: string, pass: string) => {
+    clearAuthMessages();
+    const users = getRegisteredUsers();
+    const foundUser = users.find(u => u.email === email);
+
+    if (!foundUser || foundUser.password !== pass) { // Em app real, comparar hash
+      setAuthError('E-mail ou senha inválidos. Tente novamente.');
+      return;
+    }
+    if (!foundUser.isVerified) {
+        setAuthError('Sua conta não foi verificada. Por favor, verifique seu e-mail.');
+        return;
+    }
+
+    const loggedInUser = createInitialUser(foundUser.name);
+    setUser(loggedInUser);
+    localStorage.setItem('kyros_session', JSON.stringify(loggedInUser));
+    setView('dashboard');
+    setModal(null);
+  };
+
+  const handleSignup = (name: string, email: string, pass: string) => {
+    clearAuthMessages();
+    if (passwordStrength.score < 5) {
+        setAuthError(`Senha fraca. ${passwordStrength.feedback}`);
+        return;
+    }
+    
+    const users = getRegisteredUsers();
+    if (users.some(u => u.email === email)) {
+      setAuthError('Este e-mail já está registrado. Tente fazer login.');
+      return;
+    }
+
+    const newUser: RegisteredUser = { name, email, password: pass, isVerified: false };
+    users.push(newUser);
+    localStorage.setItem('kyros_users', JSON.stringify(users));
+    
+    // Simulate sending verification email
+    console.log(`Verification link for ${email}: ${window.location.origin}?verify_email=${email}`);
+    
+    setModal({ type: 'emailVerification', email: email });
+  };
+  
+  const handleEmailVerification = (email: string) => {
+    const users = getRegisteredUsers();
+    const userIndex = users.findIndex(u => u.email === email);
+    if(userIndex !== -1) {
+        users[userIndex].isVerified = true;
+        localStorage.setItem('kyros_users', JSON.stringify(users));
+        setModal({type: 'login'});
+        setAuthSuccess("E-mail verificado com sucesso! Você já pode fazer login.");
+         // Clean up URL
+        window.history.pushState({}, document.title, window.location.pathname);
+    }
+  }
+
   const handleLogout = () => {
     setUser(null);
+    localStorage.removeItem('kyros_session');
     setView('landing');
   };
+  
+  const handleForgotPassword = (email: string) => {
+      clearAuthMessages();
+      const users = getRegisteredUsers();
+      if(users.some(u => u.email === email)) {
+          // Simulate sending reset link
+          setAuthSuccess(`Um link para redefinir sua senha foi enviado para ${email}.`);
+      } else {
+          setAuthError("Nenhuma conta encontrada com este e-mail.");
+      }
+  }
 
   const handleQuizComplete = (answers: QuizAnswer[], finalScores: LifeArea[]) => {
     setQuizResults(answers);
     setInitialLifeAreas(finalScores);
     setView('dashboard');
   };
+  
+  const clearAuthMessages = () => {
+      setAuthError(null);
+      setAuthSuccess(null);
+  }
+  
+  const openModal = (type: 'login' | 'signup') => {
+      clearAuthMessages();
+      setPassword('');
+      setPasswordStrength({score: 0, feedback: ''});
+      setShowPassword(false);
+      setModal({type: type});
+  }
 
   const renderModalContent = () => {
     if (!modal) return null;
 
     switch (modal.type) {
       case 'signup':
+        const strengthColors = ['bg-red-500', 'bg-red-500', 'bg-yellow-500', 'bg-yellow-500', 'bg-green-500', 'bg-green-500'];
         return (
           <>
             <h2 className="text-2xl font-bold text-white mb-2 font-display">Crie sua Conta</h2>
             <p className="text-gray-400 mb-6">Comece a construir sua melhor versão hoje.</p>
-            <form onSubmit={(e) => { 
-                e.preventDefault(); 
-                const form = e.currentTarget;
-                const name = (form.elements.namedItem('name') as HTMLInputElement).value;
-                const email = (form.elements.namedItem('email_signup') as HTMLInputElement).value;
-                const password = (form.elements.namedItem('password_signup') as HTMLInputElement).value;
-                handleSignup(name, email, password);
-              }}>
-              <div className="mb-4">
-                <label htmlFor="name" className="block text-gray-300 mb-2">Nome</label>
-                <input type="text" id="name" name="name" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" required />
+            <form onSubmit={(e) => { e.preventDefault(); handleSignup(e.currentTarget.name_signup.value, e.currentTarget.email_signup.value, password); }}>
+              <input type="text" name="name_signup" placeholder="Nome" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500" required />
+              <input type="email" name="email_signup" placeholder="Email" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500" required />
+               <div className="relative mb-1">
+                <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => {setPassword(e.target.value); checkPasswordStrength(e.target.value);}} placeholder="Senha" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" required />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-white">
+                  {showPassword ? <EyeSlashIcon /> : <EyeIcon />}
+                </button>
               </div>
-              <div className="mb-4">
-                <label htmlFor="email_signup" className="block text-gray-300 mb-2">Email</label>
-                <input type="email" id="email_signup" name="email_signup" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" required />
+              <div className="flex items-center gap-2 mb-4">
+                  <div className={`w-1/5 h-1 rounded-full ${password.length > 0 ? strengthColors[1] : 'bg-slate-600'}`}></div>
+                  <div className={`w-1/5 h-1 rounded-full ${passwordStrength.score >= 2 ? strengthColors[2] : 'bg-slate-600'}`}></div>
+                  <div className={`w-1/5 h-1 rounded-full ${passwordStrength.score >= 3 ? strengthColors[3] : 'bg-slate-600'}`}></div>
+                  <div className={`w-1/5 h-1 rounded-full ${passwordStrength.score >= 4 ? strengthColors[4] : 'bg-slate-600'}`}></div>
+                  <div className={`w-1/5 h-1 rounded-full ${passwordStrength.score >= 5 ? strengthColors[5] : 'bg-slate-600'}`}></div>
               </div>
-               <div className="mb-6">
-                <label htmlFor="password_signup" className="block text-gray-300 mb-2">Senha</label>
-                <input type="password" id="password_signup" name="password_signup" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" required />
-              </div>
-              <button type="submit" className="w-full bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">
-                Criar conta gratuita
-              </button>
+              {password.length > 0 && passwordStrength.score < 5 && <p className="text-yellow-400 text-xs mb-4">{passwordStrength.feedback}</p>}
+              {authError && <p className="text-red-400 text-sm mb-4 text-center">{authError}</p>}
+              <button type="submit" className="w-full bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors disabled:opacity-50">Criar Conta</button>
             </form>
+             <div className="text-center text-gray-400 my-4 text-sm">ou</div>
+             <div className="flex gap-4">
+                <button className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-full transition-colors">Google</button>
+                <button className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-full transition-colors">Facebook</button>
+            </div>
           </>
         );
       case 'login':
@@ -98,37 +210,55 @@ const App: React.FC = () => {
           <>
             <h2 className="text-2xl font-bold text-white mb-2 font-display">Bem-vindo(a) de volta!</h2>
             <p className="text-gray-400 mb-6">Continue sua jornada de progresso.</p>
-            <form onSubmit={(e) => { 
-                e.preventDefault(); 
-                const form = e.currentTarget;
-                const email = (form.elements.namedItem('email_login') as HTMLInputElement).value;
-                const password = (form.elements.namedItem('password_login') as HTMLInputElement).value;
-                handleLogin(email, password);
-              }}>
-               <div className="mb-4">
-                <label htmlFor="email_login" className="block text-gray-300 mb-2">Email</label>
-                <input type="email" id="email_login" name="email_login" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" required />
-              </div>
-               <div className="mb-6">
-                <label htmlFor="password_login" className="block text-gray-300 mb-2">Senha</label>
-                <input type="password" id="password_login" name="password_login" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" required />
-              </div>
-              {loginError && <p className="text-red-400 text-sm mb-4 text-center">{loginError}</p>}
-              <button type="submit" className="w-full bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">
-                Entrar
-              </button>
+            <form onSubmit={(e) => { e.preventDefault(); handleLogin(e.currentTarget.email_login.value, e.currentTarget.password_login.value);}}>
+               <input type="email" name="email_login" placeholder="Email" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500" required />
+               <div className="relative mb-2">
+                 <input type={showPassword ? "text" : "password"} name="password_login" placeholder="Senha" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" required />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-white">
+                    {showPassword ? <EyeSlashIcon /> : <EyeIcon />}
+                  </button>
+               </div>
+               <div className="text-right mb-4">
+                    <a href="#" onClick={(e) => {e.preventDefault(); setModal({type: 'forgotPassword'})}} className="text-sm text-purple-400 hover:underline">Esqueceu a senha?</a>
+               </div>
+              {authError && <p className="text-red-400 text-sm mb-4 text-center">{authError}</p>}
+              {authSuccess && <p className="text-green-400 text-sm mb-4 text-center">{authSuccess}</p>}
+              <button type="submit" className="w-full bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">Entrar</button>
             </form>
           </>
         );
+      case 'emailVerification':
+          return (
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-white mb-2 font-display">Verifique seu E-mail</h2>
+              <p className="text-gray-400 mb-6">Enviamos um link de confirmação para <span className="font-semibold text-white">{modal.email}</span>. Por favor, clique no link para ativar sua conta.</p>
+              <button onClick={() => setModal(null)} className="w-full bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">
+                Entendido
+              </button>
+            </div>
+          );
+      case 'forgotPassword':
+          return (
+             <>
+                <h2 className="text-2xl font-bold text-white mb-2 font-display">Recuperar Senha</h2>
+                <p className="text-gray-400 mb-6">Digite seu e-mail para receber um link de recuperação.</p>
+                <form onSubmit={(e) => { e.preventDefault(); handleForgotPassword(e.currentTarget.email_recovery.value);}}>
+                    <input type="email" name="email_recovery" placeholder="Email" className="w-full bg-slate-700/50 border border-slate-600 rounded-md py-2 px-3 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500" required />
+                    {authError && <p className="text-red-400 text-sm mb-4 text-center">{authError}</p>}
+                    {authSuccess && <p className="text-green-400 text-sm mb-4 text-center">{authSuccess}</p>}
+                    <button type="submit" className="w-full bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">Enviar Link</button>
+                </form>
+             </>
+          );
       case 'payment':
         return (
-          <>
+          <div className="text-center">
             <h2 className="text-2xl font-bold text-white mb-2 font-display">Assinatura</h2>
             <p className="text-gray-400">Esta é uma simulação de checkout. A funcionalidade de pagamento real será implementada em breve.</p>
             <button onClick={() => setModal(null)} className="mt-6 w-full bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">
                 Entendido
             </button>
-          </>
+          </div>
         );
       case 'featureInfo':
          return (
@@ -151,7 +281,7 @@ const App: React.FC = () => {
         return <Dashboard user={user} onLogout={handleLogout} initialLifeAreas={initialLifeAreas} />;
       case 'landing':
       default:
-        return <LandingPage setModal={setModal} />;
+        return <LandingPage setModal={setModal} openModal={openModal} />;
     }
   };
 
@@ -161,8 +291,8 @@ const App: React.FC = () => {
       <Header 
         user={user} 
         onLogout={handleLogout} 
-        onOpenLogin={() => { setModal({type: 'login'}); setLoginError(null); }}
-        onOpenSignup={() => setModal({type: 'signup'})}
+        onOpenLogin={() => openModal('login')}
+        onOpenSignup={() => openModal('signup')}
         onGoToDashboard={() => setView('dashboard')}
         onGoHome={() => setView('landing')}
       />
