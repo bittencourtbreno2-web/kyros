@@ -56,9 +56,9 @@ const mockCommunityPosts: CommunityPost[] = [
 ];
 
 const mockRewards: Reward[] = [
-    { id: 1, title: "5% de Desconto no Plano", description: "Use seus pontos para economizar na sua próxima mensalidade.", cost: 1000, icon: <ZapIcon /> },
+    { id: 1, title: "Análise de Perfil Personalizada", description: "Receba um relatório detalhado da IA sobre seus pontos fortes.", cost: 2000, icon: <ZapIcon /> },
     { id: 2, title: "Consultoria Premium com IA", description: "Uma sessão de planejamento aprofundada com a IA.", cost: 3000, icon: <SparklesIcon /> },
-    { id: 3, title: "1 Mês de Plano Premium", description: "Desbloqueie todos os recursos premium por um mês.", cost: 5000, icon: <BadgeIcon /> },
+    { id: 3, title: "1 Mês de Plano Essencial", description: "Desbloqueie os recursos do plano Essencial por um mês.", cost: 50000, icon: <BadgeIcon /> },
     { id: 4, title: "E-book: Foco e Disciplina", description: "Um guia exclusivo para aprimorar sua concentração.", cost: 1500, icon: <BookOpenIcon /> },
 ];
 
