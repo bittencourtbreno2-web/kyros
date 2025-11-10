@@ -12,7 +12,7 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [quizResults, setQuizResults] = useState<QuizAnswer[]>([]);
   const [initialLifeAreas, setInitialLifeAreas] = useState<LifeArea[]>([]);
-  const [modal, setModal] = useState<{ type: 'signup' | 'login' | 'payment' | 'featureInfo' | 'emailVerification' | 'forgotPassword' | 'resetConfirmation'; data?: Feature; email?: string } | null>(null);
+  const [modal, setModal] = useState<{ type: 'signup' | 'login' | 'payment' | 'featureInfo' | 'forgotPassword' | 'resetConfirmation'; data?: Feature; email?: string } | null>(null);
 
   // States for auth forms
   const [authError, setAuthError] = useState<string | null>(null);
@@ -34,11 +34,6 @@ const App: React.FC = () => {
     } catch (error) {
         console.error("Failed to parse session from localStorage", error);
         localStorage.removeItem('kyros_session');
-    }
-    // Simulate email verification click from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('verify_email')) {
-        handleEmailVerification(urlParams.get('verify_email')!);
     }
   }, []);
 
@@ -84,10 +79,6 @@ const App: React.FC = () => {
       setAuthError('E-mail ou senha inválidos. Tente novamente.');
       return;
     }
-    if (!foundUser.isVerified) {
-        setAuthError('Sua conta não foi verificada. Por favor, verifique seu e-mail.');
-        return;
-    }
 
     const loggedInUser = createInitialUser(foundUser.name);
     setUser(loggedInUser);
@@ -95,6 +86,34 @@ const App: React.FC = () => {
     setView('dashboard');
     setModal(null);
   };
+  
+  const handleGoogleLogin = () => {
+    clearAuthMessages();
+    const googleEmail = 'usuario.google@kyros.ai';
+    const googleName = 'Usuário Google';
+
+    const users = getRegisteredUsers();
+    let foundUser = users.find(u => u.email === googleEmail);
+
+    if (!foundUser) {
+        // If user doesn't exist, create a new one (sign up with Google)
+        const newGoogleUser: RegisteredUser = {
+            name: googleName,
+            email: googleEmail,
+            // No password for social logins
+        };
+        users.push(newGoogleUser);
+        localStorage.setItem('kyros_users', JSON.stringify(users));
+        foundUser = newGoogleUser;
+    }
+
+    // Log the user in
+    const loggedInUser = createInitialUser(foundUser.name);
+    setUser(loggedInUser);
+    localStorage.setItem('kyros_session', JSON.stringify(loggedInUser));
+    setView('dashboard');
+    setModal(null);
+  }
 
   const handleSignup = (name: string, email: string, pass: string) => {
     clearAuthMessages();
@@ -109,28 +128,17 @@ const App: React.FC = () => {
       return;
     }
 
-    const newUser: RegisteredUser = { name, email, password: pass, isVerified: false };
+    const newUser: RegisteredUser = { name, email, password: pass };
     users.push(newUser);
     localStorage.setItem('kyros_users', JSON.stringify(users));
     
-    // Simulate sending verification email
-    console.log(`Verification link for ${email}: ${window.location.origin}?verify_email=${email}`);
-    
-    setModal({ type: 'emailVerification', email: email });
+    // Directly log the user in after signup
+    const loggedInUser = createInitialUser(name);
+    setUser(loggedInUser);
+    localStorage.setItem('kyros_session', JSON.stringify(loggedInUser));
+    setView('dashboard');
+    setModal(null);
   };
-  
-  const handleEmailVerification = (email: string) => {
-    const users = getRegisteredUsers();
-    const userIndex = users.findIndex(u => u.email === email);
-    if(userIndex !== -1) {
-        users[userIndex].isVerified = true;
-        localStorage.setItem('kyros_users', JSON.stringify(users));
-        setModal({type: 'login'});
-        setAuthSuccess("E-mail verificado com sucesso! Você já pode fazer login.");
-         // Clean up URL
-        window.history.pushState({}, document.title, window.location.pathname);
-    }
-  }
 
   const handleLogout = () => {
     setUser(null);
@@ -200,7 +208,7 @@ const App: React.FC = () => {
             </form>
              <div className="text-center text-gray-400 my-4 text-sm">ou</div>
              <div className="flex gap-4">
-                <button className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-full transition-colors">Google</button>
+                <button onClick={handleGoogleLogin} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-full transition-colors">Google</button>
                 <button className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-full transition-colors">Facebook</button>
             </div>
           </>
@@ -225,18 +233,13 @@ const App: React.FC = () => {
               {authSuccess && <p className="text-green-400 text-sm mb-4 text-center">{authSuccess}</p>}
               <button type="submit" className="w-full bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">Entrar</button>
             </form>
+             <div className="text-center text-gray-400 my-4 text-sm">ou</div>
+             <div className="flex gap-4">
+                <button onClick={handleGoogleLogin} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-full transition-colors">Google</button>
+                <button className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-full transition-colors">Facebook</button>
+            </div>
           </>
         );
-      case 'emailVerification':
-          return (
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-white mb-2 font-display">Verifique seu E-mail</h2>
-              <p className="text-gray-400 mb-6">Enviamos um link de confirmação para <span className="font-semibold text-white">{modal.email}</span>. Por favor, clique no link para ativar sua conta.</p>
-              <button onClick={() => setModal(null)} className="w-full bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">
-                Entendido
-              </button>
-            </div>
-          );
       case 'forgotPassword':
           return (
              <>

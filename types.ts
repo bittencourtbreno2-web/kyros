@@ -10,8 +10,7 @@ export interface User {
 export interface RegisteredUser {
   name: string;
   email: string;
-  password: string; // Em um app real, isso seria um hash
-  isVerified: boolean;
+  password?: string; // Em um app real, isso seria um hash. Opcional para logins sociais.
 }
 
 export interface LifeArea {
